@@ -137,14 +137,12 @@ def determine_category(text: str) -> str:
         "RENT": RENT,
     }
 
-    new_description = text
-
     for category, category_pattern in all_categories.items():
         pattern = '|'.join(re.escape(word) for word in category_pattern)
         if re.search(pattern, text, re.IGNORECASE):
-            new_description = category
+            return category
 
-    return new_description
+    return text
 
 
 def rename_description(data_statements: DataFrame) -> DataFrame:
