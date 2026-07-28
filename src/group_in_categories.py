@@ -7,20 +7,32 @@ from clean_description import clean_all_descriptions
 from read_data import read_bank_statements
 
 # Placeholder in case I need this category
-RECURRING_PAYMENTS = {"MONTHLY FEE",
-                      "HYDRO BILL",
+RECURRING_PAYMENTS = {"E-TRANSFER SENT KEN WONG",
                       "ONLINE TRANSFER",
                       "ONLINE BANKING TRANSFER",
                       "MISC PAYMENT SUN LIFE",
                       "MOBILE CHEQUE DEPOSIT",
-                      "AUTO INSURANCE ICBC",
                       "TAX REFUND CANADA",
-                      "INSURANCE AVIVA-HOME/AUTO",
-                      "EI CANADA",
-                      "INTERNATIONAL REMITTANCE",
                       "ATM WITHDRAWAL",
-                      "AUTO INSURANCE ICBC",
                       }
+
+RENT = {"KEN WONG"}
+
+UTILITIES = {"PUBLIC MOBILE", "HYDRO", "OXIO", "INSURANCE AVIVA-HOME", "MONTHLY FEE"}
+
+PAYROLL = {"EI CANADA", "PAYROLL DEPOSIT", "SERVICE DE GARDE LES COPAINS", }
+
+CAR = {"PETRO-CANADA", "ICBC", "CHV", }
+
+TRANSPORT = {"COMPASS", "UBER CANADA/UBE", }
+
+IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "INTERNATIONAL REMITTANCE"}
+
+DA_GYM = {"DENMAN ATHLETIC"}
+
+ALCOHOL = {"BC LIQUOR", }
+
+YOGACOACHING = {"YOGACOACHING", "SYSTEME.IO", }
 
 COFFEES = {"SQ *CHEZ NOUS B",
            "BLENZ ON DENMAN",
@@ -39,6 +51,7 @@ COFFEES = {"SQ *CHEZ NOUS B",
            "MARCHE MON PITO",
            "LS TOFINO SEA K",
            "SOLLY'S BAGELRY",
+           "ORGANIC BITES C"
            }
 
 RESTAURANTS = {"HOUSE OF DOSAS",
@@ -56,6 +69,7 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "TST-TACOFINO TO",
                "WHITE RABBIT CO",
                "YAYU CAFE & RES",
+               "VEGAIN"
                }
 
 GROCERIES = ["WHOLE FOODS MAR",
@@ -70,7 +84,10 @@ GROCERIES = ["WHOLE FOODS MAR",
              "DOLLARAMA",
              "FRUITICANA",
              "QUALITY FOODS",
+             "BERRYMOBILE",
              ]
+
+COSTCO = {"COSTCO WHOLESAL", "COSTCO CA"}
 
 HOUSE = ["THE SOAP DISPEN",
          "CANADIAN TIRE",
@@ -78,6 +95,8 @@ HOUSE = ["THE SOAP DISPEN",
          "DOLLORAMA",
          "BANYEN BOOKS",
          "THE CROSS",
+         "MARSHALLS",
+         "STEVE WEST END RECYCLING",
          ]
 
 HEALTH = ["SHOPPERS DRUG M",
@@ -89,32 +108,41 @@ HEALTH = ["SHOPPERS DRUG M",
           "OSTEOPATHY",
           "MY VIRTUAL SLP",
           "SILVER ORCH",
-          "SABA THAI",
+          "SABAI THAI",
           "TOETOSOUL",
           "MSK HEALTH",
+          "TUNE UP",
           ]
+
+TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
 
 
 def determine_category(text: str) -> str:
-    # Use regex pattern to identify the categories
-    coffee_pattern = '|'.join(re.escape(word) for word in COFFEES)
-    restaurant_pattern = '|'.join(re.escape(word) for word in RESTAURANTS)
-    costco_pattern = '|'.join(re.escape(word) for word in ["COSTCO WHOLESAL", "COSTCO CA"])
-    groceries_pattern = '|'.join(re.escape(word) for word in GROCERIES)
-    sdg_pattern = r"^PAYROLL DEPOSIT .* SERV.*"
+    all_categories = {
+        "UTILITIES": UTILITIES,
+        "PAYROLL": PAYROLL,
+        "CAR": CAR,
+        "TRANSPORT": TRANSPORT,
+        "IMMIGRATION_AUSTRALIA": IMMIGRATION_AUSTRALIA,
+        "DA_GYM": DA_GYM,
+        "ALCOHOL": ALCOHOL,
+        "YOGACOACHING": YOGACOACHING,
+        "COFFEES": COFFEES,
+        "RESTAURANTS": RESTAURANTS,
+        "GROCERIES": GROCERIES,
+        "COSTCO": COSTCO,
+        "HOUSE": HOUSE,
+        "HEALTH": HEALTH,
+        "TRAVELS": TRAVELS,
+        "RENT": RENT,
+    }
 
     new_description = text
 
-    if re.search(coffee_pattern, text, re.IGNORECASE):
-        new_description = "COFFEES"
-    elif re.search(restaurant_pattern, text, re.IGNORECASE):
-        new_description = "RESTAURANTS"
-    elif re.search(groceries_pattern, text, re.IGNORECASE):
-        new_description = "GROCERIES"
-    elif re.search(costco_pattern, text, re.IGNORECASE):
-        new_description = "COSTCO"
-    elif re.search(sdg_pattern, text, re.IGNORECASE):
-        new_description = re.sub("(DEPOSIT).*", f"DEPOSIT SDG LES COPAINS", text)
+    for category, category_pattern in all_categories.items():
+        pattern = '|'.join(re.escape(word) for word in category_pattern)
+        if re.search(pattern, text, re.IGNORECASE):
+            new_description = category
 
     return new_description
 
@@ -132,4 +160,6 @@ if __name__ == "__main__":
 
     cleaned_statements = clean_all_descriptions(bank_statements)
     categorized_statements = rename_description(cleaned_statements)
-    categorized_statements.to_csv('categorized_statements.csv')
+
+    categorized_statements_path = script_dir / "data" / "categorized_statements.csv"
+    categorized_statements.to_csv(categorized_statements_path)
