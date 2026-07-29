@@ -26,9 +26,9 @@ CAR = {"PETRO-CANADA", "ICBC", "CHV", }
 
 TRANSPORT = {"COMPASS", "UBER CANADA/UBE", }
 
-IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "INTERNATIONAL REMITTANCE"}
+IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "LINKEDIN", "INTERNATIONAL REMITTANCE", "EVENTBRITE",}
 
-DA_GYM = {"DENMAN ATHLETIC"}
+DA_LEISURES = {"DENMAN ATHLETIC", "VANCOUVER PB RE", "POPEYES SUPPLEM"}
 
 ALCOHOL = {"BC LIQUOR", }
 
@@ -72,7 +72,11 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "VEGAIN"
                }
 
-GROCERIES = ["WHOLE FOODS MAR",
+ONLINE_TRANSFER = {"ONLINE TRANSFER", "ONLINE BANKING TRANSFER"}
+
+BANK_DEPOSIT = {"MOBILE CHEQUE DEPOSIT", }
+
+GROCERIES = {"WHOLE FOODS MAR",
              "SAFEWAY",
              "DAVIE STREET YI",  # Independent grocer
              "BRANDON & JOANN",
@@ -85,21 +89,23 @@ GROCERIES = ["WHOLE FOODS MAR",
              "FRUITICANA",
              "QUALITY FOODS",
              "BERRYMOBILE",
-             ]
+             "TOFINO CO-OP",
+             }
 
 COSTCO = {"COSTCO WHOLESAL", "COSTCO CA"}
 
-HOUSE = ["THE SOAP DISPEN",
-         "CANADIAN TIRE",
-         "THE GOURMET WAR",
-         "DOLLORAMA",
-         "BANYEN BOOKS",
-         "THE CROSS",
-         "MARSHALLS",
-         "STEVE WEST END RECYCLING",
-         ]
+HOUSE_CLOTHING = {"THE SOAP DISPEN",
+                  "CANADIAN TIRE",
+                  "THE GOURMET WAR",
+                  "DOLLORAMA",
+                  "BANYEN BOOKS",
+                  "THE CROSS",
+                  "MARSHALLS",
+                  "STEVE WEST END RECYCLING",
+                  "NICOLA DRYCLEAN",
+                  }
 
-HEALTH = ["SHOPPERS DRUG M",
+HEALTH = {"SHOPPERS DRUG M",
           "FOOTBRIDGE PHYS",
           "LIFELABS",
           "LUXCEY",
@@ -112,42 +118,43 @@ HEALTH = ["SHOPPERS DRUG M",
           "TOETOSOUL",
           "MSK HEALTH",
           "TUNE UP",
-          ]
+          }
 
 TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
 
+MISC = {"VANCOUVER PUBLI", }
+
+
+ALL_CATEGORIES = {
+    "UTILITIES": UTILITIES,
+    "CAR": CAR,
+    "TRANSPORT": TRANSPORT,
+    "IMMIGRATION AUSTRALIA": IMMIGRATION_AUSTRALIA,
+    "DA_LEISURES": DA_LEISURES,
+    "ALCOHOL": ALCOHOL,
+    "YOGACOACHING": YOGACOACHING,
+    "COFFEES": COFFEES,
+    "RESTAURANTS": RESTAURANTS,
+    "GROCERIES": GROCERIES,
+    "COSTCO": COSTCO,
+    "HOUSE": HOUSE_CLOTHING,
+    "HEALTH": HEALTH,
+    "TRAVELS": TRAVELS,
+    "RENT": RENT,
+}
+
 
 def determine_category(text: str) -> str:
-    all_categories = {
-        "UTILITIES": UTILITIES,
-        "PAYROLL": PAYROLL,
-        "CAR": CAR,
-        "TRANSPORT": TRANSPORT,
-        "IMMIGRATION_AUSTRALIA": IMMIGRATION_AUSTRALIA,
-        "DA_GYM": DA_GYM,
-        "ALCOHOL": ALCOHOL,
-        "YOGACOACHING": YOGACOACHING,
-        "COFFEES": COFFEES,
-        "RESTAURANTS": RESTAURANTS,
-        "GROCERIES": GROCERIES,
-        "COSTCO": COSTCO,
-        "HOUSE": HOUSE,
-        "HEALTH": HEALTH,
-        "TRAVELS": TRAVELS,
-        "RENT": RENT,
-    }
-
-    for category, category_pattern in all_categories.items():
+    for category, category_pattern in ALL_CATEGORIES.items():
         pattern = '|'.join(re.escape(word) for word in category_pattern)
         if re.search(pattern, text, re.IGNORECASE):
             return category
-
+        elif "SERV" in text.upper():
+            return "PAYROLL DEPOSIT SERVICE DE GARDE"
     return text
-
 
 def rename_description(data_statements: DataFrame) -> DataFrame:
     data_statements['Description 2'] = data_statements['Description 2'].apply(determine_category)
-
     return data_statements
 
 
@@ -158,6 +165,6 @@ if __name__ == "__main__":
 
     cleaned_statements = clean_all_descriptions(bank_statements)
     categorized_statements = rename_description(cleaned_statements)
-
     categorized_statements_path = script_dir / "data" / "categorized_statements.csv"
     categorized_statements.to_csv(categorized_statements_path)
+
