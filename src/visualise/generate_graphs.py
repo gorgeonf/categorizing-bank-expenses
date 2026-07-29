@@ -6,9 +6,9 @@ pd.set_option('display.max_columns', None)
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
-from clean_description import clean_all_descriptions
-from group_in_categories import rename_description, ALL_CATEGORIES
-from read_data import read_bank_statements
+from data.clean_description import clean_all_descriptions
+from categorise.group_in_categories import rename_description, ALL_CATEGORIES
+from data.read_data import read_bank_statements
 
 
 def sum_categories(statement: DataFrame, categories: set) -> dict:
@@ -19,7 +19,7 @@ def sum_categories(statement: DataFrame, categories: set) -> dict:
     return dict_expenses
 
 
-def prepare_data(statement: DataFrame) -> tuple:
+def build_category_dicts(statement: DataFrame) -> tuple:
     income_mask = statement['CAD$'] > 0
     expenses_mask = (statement['CAD$'] < 0) & (statement['Description 2'].isin(ALL_CATEGORIES.keys()))
     misc_mask = (statement['CAD$'] < 0) & (~statement['Description 2'].isin(ALL_CATEGORIES.keys())) & (
@@ -33,6 +33,7 @@ def prepare_data(statement: DataFrame) -> tuple:
                                  list(statement.loc[internal_transfer_mask]['CAD$'])))
 
     return expenses, income, misc, internal_transfer
+
 
 
 def generate_bar_graph_categories(data: tuple):
@@ -97,5 +98,5 @@ if __name__ == "__main__":
     cleaned_statements = clean_all_descriptions(bank_statements)
     categorized_statements = rename_description(cleaned_statements)
 
-    statement_data = prepare_data(categorized_statements)
+    statement_data = build_category_dicts(categorized_statements)
     generate_pie_graph_categories(statement_data)

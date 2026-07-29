@@ -3,8 +3,8 @@ from pathlib import Path
 
 from pandas import DataFrame
 
-from clean_description import clean_all_descriptions
-from read_data import read_bank_statements
+from data.clean_description import clean_all_descriptions
+from data.read_data import read_bank_statements
 
 # Placeholder in case I need this category
 RECURRING_PAYMENTS = {"E-TRANSFER SENT KEN WONG",

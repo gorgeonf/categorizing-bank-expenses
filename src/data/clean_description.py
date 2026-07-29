@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pandas import DataFrame
 
-from read_data import read_bank_statements
+from data.read_data import read_bank_statements
 
 COMMON_PREFIXES = [r".*E-TRANSFER SENT ",
                    r".*INTERAC PURCHASE - \d{4}",
