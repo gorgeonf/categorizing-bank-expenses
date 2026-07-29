@@ -8,10 +8,7 @@ from read_data import read_bank_statements
 
 # Placeholder in case I need this category
 RECURRING_PAYMENTS = {"E-TRANSFER SENT KEN WONG",
-                      "ONLINE TRANSFER",
-                      "ONLINE BANKING TRANSFER",
                       "MISC PAYMENT SUN LIFE",
-                      "MOBILE CHEQUE DEPOSIT",
                       "TAX REFUND CANADA",
                       "ATM WITHDRAWAL",
                       }
@@ -20,19 +17,19 @@ RENT = {"KEN WONG"}
 
 UTILITIES = {"PUBLIC MOBILE", "HYDRO", "OXIO", "INSURANCE AVIVA-HOME", "MONTHLY FEE"}
 
-PAYROLL = {"EI CANADA", "PAYROLL DEPOSIT", "SERVICE DE GARDE LES COPAINS", }
+INCOME = {"EI CANADA", "PAYROLL DEPOSIT", "SERVICE DE GARDE LES COPAINS", "MOBILE CHEQUE DEPOSIT", }
 
 CAR = {"PETRO-CANADA", "ICBC", "CHV", }
 
 TRANSPORT = {"COMPASS", "UBER CANADA/UBE", }
 
-IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "LINKEDIN", "INTERNATIONAL REMITTANCE", "EVENTBRITE",}
+IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "LINKEDIN", "INTERNATIONAL REMITTANCE", "EVENTBRITE", }
 
 DA_LEISURES = {"DENMAN ATHLETIC", "VANCOUVER PB RE", "POPEYES SUPPLEM"}
 
 ALCOHOL = {"BC LIQUOR", }
 
-YOGACOACHING = {"YOGACOACHING", "SYSTEME.IO", }
+YOGACOACHING = {"YOGACOACHING", "SYSTEME.IO", "NANCY GIRARD"}
 
 COFFEES = {"SQ *CHEZ NOUS B",
            "BLENZ ON DENMAN",
@@ -73,8 +70,6 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                }
 
 ONLINE_TRANSFER = {"ONLINE TRANSFER", "ONLINE BANKING TRANSFER"}
-
-BANK_DEPOSIT = {"MOBILE CHEQUE DEPOSIT", }
 
 GROCERIES = {"WHOLE FOODS MAR",
              "SAFEWAY",
@@ -124,7 +119,6 @@ TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
 
 MISC = {"VANCOUVER PUBLI", }
 
-
 ALL_CATEGORIES = {
     "UTILITIES": UTILITIES,
     "CAR": CAR,
@@ -151,7 +145,13 @@ def determine_category(text: str) -> str:
             return category
         elif "SERV" in text.upper():
             return "PAYROLL DEPOSIT SERVICE DE GARDE"
+        # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
+        elif any(word in text for word in ONLINE_TRANSFER):
+            return "BANKING TRANSFER"
+        elif "MOBILE CHEQUE DEPOSIT" in text.upper():
+            return "CHEQUE DEPOSIT"
     return text
+
 
 def rename_description(data_statements: DataFrame) -> DataFrame:
     data_statements['Description 2'] = data_statements['Description 2'].apply(determine_category)
@@ -167,4 +167,3 @@ if __name__ == "__main__":
     categorized_statements = rename_description(cleaned_statements)
     categorized_statements_path = script_dir / "data" / "categorized_statements.csv"
     categorized_statements.to_csv(categorized_statements_path)
-
