@@ -17,11 +17,14 @@ def read_bank_statements(file_path: Path) -> DataFrame:
     # 'Description 2' currently empty will serve as working copy, while 'Description 1' will remain untouched
     bank_statements['Description 2'] = bank_statements['Description 1']
 
+    # Convert dates from string to datetimes
+    bank_statements['Transaction Date'] = pd.to_datetime(bank_statements['Transaction Date'], format='%m/%d/%Y')
+
     # Only keep 'Transaction Date', 'Description 1', 'Description 2', 'CAD$'
     return bank_statements[['Transaction Date', 'Description 1', 'Description 2', 'CAD$']]
 
 
 if __name__ == "__main__":
-    script_dir = Path(__file__).resolve().parent.parent
+    script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
     statements = read_bank_statements(bank_statement_path)

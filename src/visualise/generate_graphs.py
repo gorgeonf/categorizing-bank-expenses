@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 pd.set_option('display.max_columns', None)
@@ -23,10 +24,10 @@ def build_category_dicts(statement: DataFrame) -> tuple:
     income_mask = statement['CAD$'] > 0
     expenses_mask = (statement['CAD$'] < 0) & (statement['Description 2'].isin(ALL_CATEGORIES.keys()))
     misc_mask = (statement['CAD$'] < 0) & (~statement['Description 2'].isin(ALL_CATEGORIES.keys())) & (
-                statement['Description 2'] != "BANKING TRANSFER")
+            statement['Description 2'] != "BANKING TRANSFER")
     internal_transfer_mask = statement['Description 2'] == "BANKING TRANSFER"
 
-    expenses = sum_categories(statement.loc[expenses_mask], ALL_CATEGORIES.keys())
+    expenses = sum_categories(statement.loc[expenses_mask], set(statement.loc[expenses_mask]['Description 2']))
     income = sum_categories(statement.loc[income_mask], set(statement.loc[income_mask]['Description 2']))
     misc = sum_categories(statement.loc[misc_mask], set(statement.loc[misc_mask]['Description 2']))
     internal_transfer = dict(zip(list(statement.loc[internal_transfer_mask]['Transaction Date']),
@@ -35,31 +36,20 @@ def build_category_dicts(statement: DataFrame) -> tuple:
     return expenses, income, misc, internal_transfer
 
 
+def generate_bar_graph_summary(data: tuple):
+    incoming_transfers = [x for x in data[3].values() if x > 0]
+    outgoing_transfers = [x for x in data[3].values() if x < 0]
 
-def generate_bar_graph_categories(data: tuple):
+    labels = np.array(['Expenses', 'Income', 'Miscellaneous', 'Incoming Transfers', 'Outgoing Transfers'])
+    values = np.array([sum(data[0].values()), sum(data[1].values()), sum(data[2].values()), sum(incoming_transfers),
+                       sum(outgoing_transfers)])
+
     cmap = plt.get_cmap('viridis')
-    colors_categories = [cmap(i / len(ALL_CATEGORIES)) for i in range(len(ALL_CATEGORIES))]
+    colors_categories = [cmap(i / len(labels)) for i in range(len(labels))]
 
-    expenses = data[0]
-    income = data[1]
-    misc = data[2]
-    internal_transfer = data[3]
-
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(12, 6))
-    ax1.bar(expenses.keys(), expenses.values(), color=colors_categories, edgecolor='black')
-    ax1.set_title('Expenses')
-    ax2.bar(income.keys(), income.values(), color=colors_categories, edgecolor='black')
-    ax2.set_title('Income')
-    ax3.bar(misc.keys(), misc.values(), color=colors_categories, edgecolor='black')
-    ax3.set_title('Miscellaneous')
-    ax4.bar(internal_transfer.keys(), internal_transfer.values(), color=colors_categories, edgecolor='black')
-    ax4.set_title('Internal Transfers')
-
-    plt.setp(ax1.get_xticklabels(), rotation=45, ha='right')
-    plt.setp(ax2.get_xticklabels(), rotation=45, ha='right')
-    plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
-    plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
-
+    fig, ax = plt.subplots()
+    bars = ax.bar(labels, values, color=colors_categories)
+    ax.bar_label(bars, padding=3, fontsize=10)
     plt.show()
 
 
@@ -67,31 +57,27 @@ def generate_pie_graph_categories(data: tuple):
     expenses = {key: abs(value) for key, value in data[0].items()}
     income = data[1]
     misc = {key: abs(value) for key, value in data[2].items()}
-    internal_transfer ={key: abs(value) for key, value in data[3].items()}
 
-    plt.figure()
-    plt.pie(expenses.values(), labels=expenses.keys(), autopct='%1.1f%%')
-    plt.suptitle('Expenses')
-    plt.show()
+    internal_transfer = {key.strftime('%d %b %Y'): value for key, value in data[3].items()}
+    incoming_transfers = {key: value for key, value in internal_transfer.items() if value > 0}
+    outgoing_transfers = {key: -value for key, value in internal_transfer.items() if value < 0}
 
-    plt.figure()
-    plt.pie(income.values(), labels=income.keys(), autopct='%1.1f%%')
-    plt.suptitle('Income')
-    plt.show()
+    generate_pie_chart_helper(expenses, "Expenses")
+    generate_pie_chart_helper(income, "Income")
+    generate_pie_chart_helper(misc, "Miscellaneous")
+    generate_pie_chart_helper(incoming_transfers, "Incoming Transfers")
+    generate_pie_chart_helper(outgoing_transfers, "Outgoing Transfers")
 
-    plt.figure()
-    plt.pie(misc.values(), labels=misc.keys(), autopct='%1.1f%%')
-    plt.suptitle('Misc')
-    plt.show()
 
+def generate_pie_chart_helper(data: dict, title: str):
     plt.figure()
-    plt.pie(internal_transfer.values(), labels=internal_transfer.keys(), autopct='%1.1f%%')
-    plt.suptitle('Internal Transfers')
+    plt.pie(data.values(), labels=[x + "\n" + str(y) + "$" for x, y in data.items()], autopct='%1.1f%%')
+    plt.suptitle(title)
     plt.show()
 
 
 if __name__ == "__main__":
-    script_dir = Path(__file__).resolve().parent.parent
+    script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
     bank_statements = read_bank_statements(bank_statement_path)
 
