@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from data.clean_description import clean_all_descriptions
 from categorise.group_in_categories import rename_description, ALL_CATEGORIES
-from data.read_data import read_bank_statements
+from data.read_data import read_bank_statements, filter_by_date_range
 
 
 def sum_categories(statement: DataFrame, categories: set) -> dict:
@@ -20,7 +20,7 @@ def sum_categories(statement: DataFrame, categories: set) -> dict:
     return dict_expenses
 
 
-def build_category_dicts(statement: DataFrame) -> tuple:
+def build_transaction_types_dicts(statement: DataFrame) -> tuple:
     income_mask = statement['CAD$'] > 0
     expenses_mask = (statement['CAD$'] < 0) & (statement['Description 2'].isin(ALL_CATEGORIES.keys()))
     misc_mask = (statement['CAD$'] < 0) & (~statement['Description 2'].isin(ALL_CATEGORIES.keys())) & (
@@ -49,7 +49,7 @@ def generate_bar_graph_summary(data: tuple):
 
     fig, ax = plt.subplots()
     bars = ax.bar(labels, values, color=colors_categories)
-    ax.bar_label(bars, padding=3, fontsize=10)
+    ax.bar_label(bars, labels=[f"{v:,.2f}$".replace(",", " ") for v in values], padding=3, fontsize=10)
     plt.show()
 
 
@@ -62,16 +62,18 @@ def generate_pie_graph_categories(data: tuple):
     incoming_transfers = {key: value for key, value in internal_transfer.items() if value > 0}
     outgoing_transfers = {key: -value for key, value in internal_transfer.items() if value < 0}
 
-    generate_pie_chart_helper(expenses, "Expenses")
-    generate_pie_chart_helper(income, "Income")
-    generate_pie_chart_helper(misc, "Miscellaneous")
-    generate_pie_chart_helper(incoming_transfers, "Incoming Transfers")
-    generate_pie_chart_helper(outgoing_transfers, "Outgoing Transfers")
+    generate_pie_chart_helper(expenses, f"Expenses: -{sum(expenses.values()):,.2f}$".replace(",", " "))
+    generate_pie_chart_helper(income, f"Income: +{sum(income.values()):,.2f}$".replace(",", " "))
+    generate_pie_chart_helper(misc, f"Miscellaneous: -{sum(misc.values()):,.2f}$".replace(",", " "))
+    generate_pie_chart_helper(incoming_transfers,
+                              f"Incoming Transfers: +{sum(incoming_transfers.values()):,.2f}$".replace(",", " "))
+    generate_pie_chart_helper(outgoing_transfers,
+                              f"Outgoing Transfers: -{sum(outgoing_transfers.values()):,.2f}$".replace(",", " "))
 
 
 def generate_pie_chart_helper(data: dict, title: str):
     plt.figure()
-    plt.pie(data.values(), labels=[x + "\n" + str(y) + "$" for x, y in data.items()], autopct='%1.1f%%')
+    plt.pie(data.values(), labels=[x + f"\n {str(y)}$" for x, y in data.items()], autopct='%1.1f%%')
     plt.suptitle(title)
     plt.show()
 
@@ -79,10 +81,11 @@ def generate_pie_chart_helper(data: dict, title: str):
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    bank_statements = read_bank_statements(bank_statement_path)
+    bank_statements = filter_by_date_range("01/06/2026", "24/07/2026", read_bank_statements(bank_statement_path))
 
     cleaned_statements = clean_all_descriptions(bank_statements)
     categorized_statements = rename_description(cleaned_statements)
 
-    statement_data = build_category_dicts(categorized_statements)
-    generate_pie_graph_categories(statement_data)
+    statement_data = build_transaction_types_dicts(categorized_statements)
+    # generate_pie_graph_categories(statement_data)
+    generate_bar_graph_summary(statement_data)

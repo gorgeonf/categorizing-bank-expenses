@@ -3,7 +3,7 @@ from pathlib import Path
 from categorise.group_in_categories import rename_description
 from data.clean_description import clean_all_descriptions
 from data.read_data import read_bank_statements
-from visualise.generate_graphs import build_category_dicts, generate_pie_graph_categories
+from visualise.generate_graphs import build_transaction_types_dicts, generate_pie_graph_categories
 
 
 def run_pipeline(csv_path: Path):
@@ -18,6 +18,6 @@ if __name__ == "__main__":
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
 
     categorised_statements = run_pipeline(bank_statement_path)
-    statement_data = build_category_dicts(categorised_statements)
+    statement_data = build_transaction_types_dicts(categorised_statements)
 
     generate_pie_graph_categories(statement_data)
