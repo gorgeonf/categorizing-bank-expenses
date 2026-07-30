@@ -3,13 +3,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
+
 pd.set_option('display.max_columns', None)
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
 from data.clean_description import clean_all_descriptions
 from categorise.group_in_categories import rename_description, ALL_CATEGORIES
-from data.read_data import read_bank_statements, filter_by_date_range
+from data.read_data import read_bank_statements
 
 
 def sum_categories(statement: DataFrame, categories: set) -> dict:
@@ -81,11 +83,15 @@ def generate_pie_chart_helper(data: dict, title: str):
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    bank_statements = filter_by_date_range("01/06/2026", "24/07/2026", read_bank_statements(bank_statement_path))
+    start_date = parse_date("11/04/2026")
+    end_date = parse_date("24/08/2026")
+    bank_statements = filter_by_date_range(start_date, end_date, read_bank_statements(bank_statement_path))
 
     cleaned_statements = clean_all_descriptions(bank_statements)
     categorized_statements = rename_description(cleaned_statements)
 
-    statement_data = build_transaction_types_dicts(categorized_statements)
-    # generate_pie_graph_categories(statement_data)
-    generate_bar_graph_summary(statement_data)
+    transaction_dicts = build_transaction_types_dicts(categorized_statements)
+    # generate_pie_graph_categories(transaction_dicts)
+    # generate_bar_graph_summary(transaction_dicts)
+
+    period_statements = slice_by_period(categorized_statements, Period.MONTHS)

@@ -161,9 +161,9 @@ def rename_description(data_statements: DataFrame) -> DataFrame:
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    bank_statements = read_bank_statements(bank_statement_path)
+    raw_statements = read_bank_statements(bank_statement_path)
 
-    cleaned_statements = clean_all_descriptions(bank_statements)
+    cleaned_statements = clean_all_descriptions(raw_statements)
     categorized_statements = rename_description(cleaned_statements)
     categorized_statements_path = script_dir / "data" / "categorized_statements.csv"
     categorized_statements.to_csv(categorized_statements_path)
