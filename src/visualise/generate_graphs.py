@@ -35,16 +35,17 @@ def build_transaction_types_dicts(statement: DataFrame) -> tuple:
     internal_transfer = dict(zip(list(statement.loc[internal_transfer_mask]['Transaction Date']),
                                  list(statement.loc[internal_transfer_mask]['CAD$'])))
 
-    return expenses, income, misc, internal_transfer
+    incoming_transfers = {x: y for x, y in internal_transfer.items() if y > 0}
+    outgoing_transfers = {x: y for x, y in internal_transfer.items() if y < 0}
+
+    return (dict(expenses.items()), dict(sorted(income.items())), dict(sorted(misc.items())),
+            dict(sorted(incoming_transfers.items())), dict(sorted(outgoing_transfers.items())))
 
 
 def generate_bar_graph_summary(data: tuple):
-    incoming_transfers = [x for x in data[3].values() if x > 0]
-    outgoing_transfers = [x for x in data[3].values() if x < 0]
-
     labels = np.array(['Expenses', 'Income', 'Miscellaneous', 'Incoming Transfers', 'Outgoing Transfers'])
-    values = np.array([sum(data[0].values()), sum(data[1].values()), sum(data[2].values()), sum(incoming_transfers),
-                       sum(outgoing_transfers)])
+    values = np.array([sum(data[0].values()), sum(data[1].values()), sum(data[2].values()), sum(data[3].values()),
+                       sum(data[4].values())])
 
     cmap = plt.get_cmap('viridis')
     colors_categories = [cmap(i / len(labels)) for i in range(len(labels))]
@@ -54,6 +55,56 @@ def generate_bar_graph_summary(data: tuple):
     ax.bar_label(bars, labels=[f"{v:,.2f}$".replace(",", " ") for v in values], padding=3, fontsize=10)
     plt.show()
 
+
+def generate_period_bar_graph(sliced_statements: list):
+    labels = np.array(['Expenses', 'Income', 'Miscellaneous', 'Incoming Transfers', 'Outgoing Transfers'])
+    y = []
+    xticks = []
+    for data in sliced_statements:
+        xticks.append(data.iloc[0]['Transaction Date'].strftime('%b'))
+        transaction_dicts = build_transaction_types_dicts(data)
+        y.append(np.array(
+            [sum(transaction_dicts[0].values()), sum(transaction_dicts[1].values()), sum(transaction_dicts[2].values()),
+             sum(transaction_dicts[3].values()), sum(transaction_dicts[4].values())]))
+        # generate_bar_graph_summary(transaction_dicts)
+
+    # Convert y from a list of 4 arrays into a 2D NumPy array of shape (4, 5)
+    y_matrix = np.array(y)
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    width = 0.15
+    x = np.arange(len(y))
+
+    # plot data in grouped manner of bar type
+    ax.bar(x - 2 * width, y_matrix[:, 0], width, color='red', label=labels[0])
+    ax.bar(x - width, y_matrix[:, 1], width, color='orange', label=labels[1])
+    ax.bar(x, y_matrix[:, 2], width, color='green', label=labels[2])
+    ax.bar(x + width, y_matrix[:, 3], width, color='yellow', label=labels[3])
+    ax.bar(x + 2 * width, y_matrix[:, 4], width, color='cyan', label=labels[4])
+
+    for container in ax.containers:
+        ax.bar_label(
+            container,
+            labels=[f"{val:,.2f}".replace(",", " ") + "$" if val != 0 else "" for val in container.datavalues],  # Formats numbers as flat currency strings
+            padding=3,  # Space in points between the top of the bar and the label text
+            fontsize=9,  # Adjust text size to keep it neat
+            weight='bold'  # Makes the numbers crisp and highly readable
+        )
+
+    # Basic layout settings
+    ax.set_xticks(x)
+    ax.set_xticklabels(xticks)
+
+    plt.xlabel("Time Period", fontsize=12)
+    plt.ylabel("CAD$", fontsize=12)
+
+    # Pad out the top of the chart framework so labels don't get cut off by the upper border
+    plt.margins(y=0.15)
+
+    plt.legend(loc="upper right")
+    plt.tight_layout()
+    plt.show()
 
 def generate_pie_graph_categories(data: tuple):
     expenses = {key: abs(value) for key, value in data[0].items()}
@@ -95,3 +146,4 @@ if __name__ == "__main__":
     # generate_bar_graph_summary(transaction_dicts)
 
     period_statements = slice_by_period(categorized_statements, Period.MONTHS)
+    generate_period_bar_graph(period_statements)
