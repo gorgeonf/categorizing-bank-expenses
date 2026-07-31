@@ -61,14 +61,13 @@ def generate_period_bar_graph(sliced_statements: list):
     y = []
     xticks = []
     for data in sliced_statements:
-        xticks.append(data.iloc[0]['Transaction Date'].strftime('%b'))
+        xticks.append(data.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
         transaction_dicts = build_transaction_types_dicts(data)
         y.append(np.array(
             [sum(transaction_dicts[0].values()), sum(transaction_dicts[1].values()), sum(transaction_dicts[2].values()),
              sum(transaction_dicts[3].values()), sum(transaction_dicts[4].values())]))
-        # generate_bar_graph_summary(transaction_dicts)
 
-    # Convert y from a list of 4 arrays into a 2D NumPy array of shape (4, 5)
+    # Convert y from a list of N arrays into a 2D NumPy array of shape (N, 5)
     y_matrix = np.array(y)
 
     fig, ax = plt.subplots(figsize=(12, 7))
@@ -78,33 +77,47 @@ def generate_period_bar_graph(sliced_statements: list):
 
     # plot data in grouped manner of bar type
     ax.bar(x - 2 * width, y_matrix[:, 0], width, color='red', label=labels[0])
-    ax.bar(x - width, y_matrix[:, 1], width, color='orange', label=labels[1])
-    ax.bar(x, y_matrix[:, 2], width, color='green', label=labels[2])
-    ax.bar(x + width, y_matrix[:, 3], width, color='yellow', label=labels[3])
-    ax.bar(x + 2 * width, y_matrix[:, 4], width, color='cyan', label=labels[4])
+    ax.bar(x - width, y_matrix[:, 1], width, color='blue', label=labels[1])
+    ax.bar(x, y_matrix[:, 2], width, color='yellow', label=labels[2])
+    ax.bar(x + width, y_matrix[:, 3], width, color='cyan', label=labels[3])
+    ax.bar(x + 2 * width, y_matrix[:, 4], width, color='orange', label=labels[4])
 
     for container in ax.containers:
         ax.bar_label(
             container,
-            labels=[f"{val:,.2f}".replace(",", " ") + "$" if val != 0 else "" for val in container.datavalues],  # Formats numbers as flat currency strings
+            labels=[f"{val:,.2f}".replace(",", " ") + "$" if val != 0 else "" for val in container.datavalues],
+            # Formats numbers as flat currency strings
             padding=3,  # Space in points between the top of the bar and the label text
             fontsize=9,  # Adjust text size to keep it neat
             weight='bold'  # Makes the numbers crisp and highly readable
         )
 
+    ax.grid(axis='y', linestyle=':', linewidth=1, color='gray', alpha=0.4)
+
+    # Delimit time period with separation lines
+    for i in range(len(x) - 1):
+        midpoint = (x[i] + x[i + 1]) / 2
+        ax.axvline(
+            x=midpoint,
+            color='grey',  # Strong color to make boundaries obvious
+            linestyle='-',  # Solid line style to distinguish from the dotted grid
+            linewidth=1.2,  # Thickness of the separation lines
+            alpha=0.2  # Semi-transparent so it stays in the background
+        )
+
     # Basic layout settings
     ax.set_xticks(x)
     ax.set_xticklabels(xticks)
+    ax.tick_params(axis='x', which='both', length=0, pad=10)
 
     plt.xlabel("Time Period", fontsize=12)
     plt.ylabel("CAD$", fontsize=12)
 
-    # Pad out the top of the chart framework so labels don't get cut off by the upper border
-    plt.margins(y=0.15)
-
+    plt.margins(y=0.2)
     plt.legend(loc="upper right")
     plt.tight_layout()
     plt.show()
+
 
 def generate_pie_graph_categories(data: tuple):
     expenses = {key: abs(value) for key, value in data[0].items()}
@@ -144,6 +157,5 @@ if __name__ == "__main__":
     transaction_dicts = build_transaction_types_dicts(categorized_statements)
     # generate_pie_graph_categories(transaction_dicts)
     # generate_bar_graph_summary(transaction_dicts)
-
     period_statements = slice_by_period(categorized_statements, Period.MONTHS)
     generate_period_bar_graph(period_statements)
