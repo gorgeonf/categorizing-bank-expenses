@@ -4,42 +4,14 @@ import numpy as np
 import pandas as pd
 
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
+from visualise.data_shaping import build_transaction_types_dicts
 
 pd.set_option('display.max_columns', None)
 import matplotlib.pyplot as plt
-from pandas import DataFrame
 
 from data.clean_description import clean_all_descriptions
-from categorise.group_in_categories import rename_description, ALL_CATEGORIES
+from categorise.group_in_categories import rename_description
 from data.read_data import read_bank_statements
-
-
-def sum_categories(statement: DataFrame, categories: set) -> dict:
-    dict_expenses = {}
-    for category in categories:
-        total = statement.loc[statement['Description 2'] == category, 'CAD$'].sum()
-        dict_expenses[category] = float(round(total, 2))
-    return dict_expenses
-
-
-def build_transaction_types_dicts(statement: DataFrame) -> tuple:
-    income_mask = statement['CAD$'] > 0
-    expenses_mask = (statement['CAD$'] < 0) & (statement['Description 2'].isin(ALL_CATEGORIES.keys()))
-    misc_mask = (statement['CAD$'] < 0) & (~statement['Description 2'].isin(ALL_CATEGORIES.keys())) & (
-            statement['Description 2'] != "BANKING TRANSFER")
-    internal_transfer_mask = statement['Description 2'] == "BANKING TRANSFER"
-
-    expenses = sum_categories(statement.loc[expenses_mask], set(statement.loc[expenses_mask]['Description 2']))
-    income = sum_categories(statement.loc[income_mask], set(statement.loc[income_mask]['Description 2']))
-    misc = sum_categories(statement.loc[misc_mask], set(statement.loc[misc_mask]['Description 2']))
-    internal_transfer = dict(zip(list(statement.loc[internal_transfer_mask]['Transaction Date']),
-                                 list(statement.loc[internal_transfer_mask]['CAD$'])))
-
-    incoming_transfers = {x: y for x, y in internal_transfer.items() if y > 0}
-    outgoing_transfers = {x: y for x, y in internal_transfer.items() if y < 0}
-
-    return (dict(expenses.items()), dict(sorted(income.items())), dict(sorted(misc.items())),
-            dict(sorted(incoming_transfers.items())), dict(sorted(outgoing_transfers.items())))
 
 
 def generate_bar_graph_summary(data: tuple):
@@ -110,11 +82,15 @@ def generate_period_bar_graph(sliced_statements: list):
     ax.set_xticklabels(xticks)
     ax.tick_params(axis='x', which='both', length=0, pad=10)
 
-    plt.xlabel("Time Period", fontsize=12)
+    plt.xlabel("Time Period", fontsize=12, labelpad=10)
     plt.ylabel("CAD$", fontsize=12)
 
     plt.margins(y=0.2)
     plt.legend(loc="upper right")
+    start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
+    end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
+    plt.title(f"Financial Statement Summary by Period\n"
+              f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()
 
@@ -147,8 +123,8 @@ def generate_pie_chart_helper(data: dict, title: str):
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    start_date = parse_date("11/04/2026")
-    end_date = parse_date("24/08/2026")
+    start_date = parse_date("01/05/2026")
+    end_date = parse_date("01/08/2026")
     bank_statements = filter_by_date_range(start_date, end_date, read_bank_statements(bank_statement_path))
 
     cleaned_statements = clean_all_descriptions(bank_statements)

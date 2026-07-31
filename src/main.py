@@ -7,7 +7,7 @@ from categorise.group_in_categories import rename_description
 from data.clean_description import clean_all_descriptions
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
 from data.read_data import read_bank_statements
-from visualise.generate_graphs import build_transaction_types_dicts
+from visualise.data_shaping import build_transaction_types_dicts
 
 
 def run_pipeline(data_statements: DataFrame, start_date: datetime = None, end_date: datetime = None):
