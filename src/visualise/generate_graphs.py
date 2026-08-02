@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
-from visualise.data_shaping import build_transaction_types_dicts
+from visualise.data_shaping import build_transaction_types_dicts, build_sub_category_dicts
 
 pd.set_option('display.max_columns', None)
 import matplotlib.pyplot as plt
@@ -123,12 +123,15 @@ def generate_pie_chart_helper(data: dict, title: str):
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    start_date = parse_date("01/05/2026")
+    start_date = parse_date("10/04/2026")
     end_date = parse_date("01/08/2026")
     bank_statements = filter_by_date_range(start_date, end_date, read_bank_statements(bank_statement_path))
 
     cleaned_statements = clean_all_descriptions(bank_statements)
     categorized_statements = rename_description(cleaned_statements)
+
+    build_sub_category_dicts(categorized_statements)
+
 
     transaction_dicts = build_transaction_types_dicts(categorized_statements)
     # generate_pie_graph_categories(transaction_dicts)

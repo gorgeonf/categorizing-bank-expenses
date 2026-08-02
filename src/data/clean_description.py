@@ -24,12 +24,13 @@ def clean_description(text, patterns: list[str]) -> str:
 
 def clean_all_descriptions(data_statements: DataFrame) -> DataFrame:
     patterns = COMMON_PREFIXES
-    data_statements['Description 2'] = data_statements['Description 2'].apply(clean_description, args=(patterns,))
+    data_statements['Category'] = data_statements['Category'].apply(clean_description, args=(patterns,))
+    data_statements['Sub-Category'] = data_statements['Category']
     return data_statements
 
 
 if __name__ == "__main__":
-    script_dir = Path(__file__).resolve().parent.parent
+    script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
     raw_statements = read_bank_statements(bank_statement_path)
 

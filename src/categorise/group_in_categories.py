@@ -1,17 +1,18 @@
 import re
 from pathlib import Path
 
+import pandas as pd
 from pandas import DataFrame
 
 from data.clean_description import clean_all_descriptions
 from data.read_data import read_bank_statements
 
 # Placeholder in case I need this category
-RECURRING_PAYMENTS = {"E-TRANSFER SENT KEN WONG",
-                      "MISC PAYMENT SUN LIFE",
-                      "TAX REFUND CANADA",
-                      "ATM WITHDRAWAL",
-                      }
+# RECURRING_PAYMENTS = {"E-TRANSFER SENT KEN WONG",
+#                       "MISC PAYMENT SUN LIFE",
+#                       "TAX REFUND CANADA",
+#                       "ATM WITHDRAWAL",
+#                       }
 
 RENT = {"KEN WONG"}
 
@@ -25,7 +26,7 @@ TRANSPORT = {"COMPASS", "UBER CANADA/UBE", }
 
 IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "LINKEDIN", "INTERNATIONAL REMITTANCE", "EVENTBRITE", }
 
-DA_LEISURES = {"DENMAN ATHLETIC", "VANCOUVER PB RE", "POPEYES SUPPLEM"}
+DENMAN_ATHLETICS = {"DENMAN ATHLETIC"}
 
 ALCOHOL = {"BC LIQUOR", }
 
@@ -48,7 +49,8 @@ COFFEES = {"SQ *CHEZ NOUS B",
            "MARCHE MON PITO",
            "LS TOFINO SEA K",
            "SOLLY'S BAGELRY",
-           "ORGANIC BITES C"
+           "ORGANIC BITES C",
+           "VEGAIN"
            }
 
 RESTAURANTS = {"HOUSE OF DOSAS",
@@ -66,7 +68,6 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "TST-TACOFINO TO",
                "WHITE RABBIT CO",
                "YAYU CAFE & RES",
-               "VEGAIN"
                }
 
 ONLINE_TRANSFER = {"ONLINE TRANSFER", "ONLINE BANKING TRANSFER"}
@@ -117,49 +118,48 @@ HEALTH = {"SHOPPERS DRUG M",
 
 TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
 
-MISC = {"VANCOUVER PUBLI", }
+ALL_CATEGORIES = {key: value for key, value in globals().items() if
+                  (isinstance(value, set) and key not in ["INCOME", "ONLINE_TRANSFER"])}
 
-ALL_CATEGORIES = {
-    "UTILITIES": UTILITIES,
-    "CAR": CAR,
-    "TRANSPORT": TRANSPORT,
-    "IMMIGRATION AUSTRALIA": IMMIGRATION_AUSTRALIA,
-    "DA & LEISURES": DA_LEISURES,
-    "ALCOHOL": ALCOHOL,
-    "YOGACOACHING": YOGA_AND_COACHING,
-    "COFFEES": COFFEES,
-    "RESTAURANTS": RESTAURANTS,
-    "GROCERIES": GROCERIES,
-    "COSTCO": COSTCO,
-    "HOUSE & CLOTHING": HOUSE_CLOTHING,
-    "HEALTH": HEALTH,
-    "TRAVELS": TRAVELS,
-    "RENT": RENT,
-}
+COLLAPSE_SUB_CATEGORY = {"COSTCO", "DENMAN_ATHLETICS", "RENT", "ALCOHOL"}
 
+def determine_category(text: str) -> tuple:
+    """
+    Maps a cleaned transaction description to (sub_category, category).
 
-def determine_category(text: str) -> str:
+    Normal case: category is matched from ALL_CATEGORIES, sub_category stays
+    as the original text (e.g. merchant name).
+    Special cases (SERV, transfers, cheque deposits): sub_category and
+    category are both set to the same override value.
+    Fallback: both returned unchanged.
+    """
     for category, category_pattern in ALL_CATEGORIES.items():
         pattern = '|'.join(re.escape(word) for word in category_pattern)
         if re.search(pattern, text, re.IGNORECASE):
-            return category
-        elif "SERV" in text.upper():
-            return "PAYROLL DEPOSIT SERVICE DE GARDE"
-        # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
-        elif any(word in text for word in ONLINE_TRANSFER):
-            return "BANKING TRANSFER"
-        elif "MOBILE CHEQUE DEPOSIT" in text.upper():
-            return "CHEQUE DEPOSIT"
-    return text
+            if category in COLLAPSE_SUB_CATEGORY:
+                return category, category
+            return text, category  # sub-category stays as original cleaned text
+    if "SERV" in text.upper():
+        return "PAYROLL DEPOSIT SERVICE DE GARDE", "PAYROLL DEPOSIT SERVICE DE GARDE"
+    # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
+    elif any(word in text for word in ONLINE_TRANSFER):
+        return "BANKING TRANSFER", "BANKING TRANSFER"
+    elif "MOBILE CHEQUE DEPOSIT" in text.upper():
+        return "CHEQUE DEPOSIT", "CHEQUE DEPOSIT"
+    return text, text
+
+
+def apply_determine_category(text: str) -> pd.Series:
+    return pd.Series(determine_category(text))
 
 
 def rename_description(data_statements: DataFrame) -> DataFrame:
-    data_statements['Description 2'] = data_statements['Description 2'].apply(determine_category)
+    data_statements[['Sub-Category', 'Category']] = data_statements['Sub-Category'].apply(apply_determine_category)
     return data_statements
 
 
 if __name__ == "__main__":
-    script_dir = Path(__file__).resolve().parent.parent
+    script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
     raw_statements = read_bank_statements(bank_statement_path)
 
@@ -167,3 +167,6 @@ if __name__ == "__main__":
     categorized_statements = rename_description(cleaned_statements)
     categorized_statements_path = script_dir / "data" / "categorized_statements.csv"
     categorized_statements.to_csv(categorized_statements_path)
+    # import pandas as pd
+    # pd.set_option("display.max_columns", None)
+    # print(categorized_statements)
