@@ -250,28 +250,20 @@ if __name__ == "__main__":
     bank_statements = filter_by_date_range(start_date, end_date, read_bank_statements(bank_statement_path))
 
     cleaned_statements = clean_all_descriptions(bank_statements)
-    categorized_statements = rename_description(cleaned_statements)
+    categorised_statements = rename_description(cleaned_statements)
 
-    # transaction_dict = build_transaction_types_dicts(categorized_statements)
+    transaction_dict = build_transaction_types_dicts(categorised_statements)
     # generate_summary_bar_graph(transaction_dict)
 
     """ Summary balance bar graph
             Ex:
-                generate_summary_balance_graph(categorized_statements, "pie")
+                generate_summary_balance_graph(categorised_statements, "pie")
         """
 
     """ Summary balance bar graph per period
         Ex:
-        period_statements = slice_by_period(categorized_statements, Period.MONTHS)
+        period_statements = slice_by_period(categorised_statements, Period.MONTHS)
         generate_period_summary_balance_bar_graph(period_statements)
     """
-    period_statements = slice_by_period(categorized_statements, Period.MONTHS)
+    period_statements = slice_by_period(categorised_statements, Period.MONTHS)
     generate_period_summary_balance_bar_graph(period_statements)
-
-    """ Financial summary by period
-        Ex: 
-            period_statements = slice_by_period(categorized_statements, Period.MONTHS)
-            generate_summary_period_bar_graph(period_statements)
-    """
-    # period_statements = slice_by_period(categorized_statements, Period.MONTHS)
-    # generate_summary_period_bar_graph(period_statements)

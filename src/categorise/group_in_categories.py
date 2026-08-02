@@ -164,9 +164,9 @@ if __name__ == "__main__":
     raw_statements = read_bank_statements(bank_statement_path)
 
     cleaned_statements = clean_all_descriptions(raw_statements)
-    categorized_statements = rename_description(cleaned_statements)
-    categorized_statements_path = script_dir / "data" / "categorized_statements.csv"
-    categorized_statements.to_csv(categorized_statements_path)
+    categorised_statements = rename_description(cleaned_statements)
+    categorised_statements_path = script_dir / "data" / "categorised_statements.csv"
+    categorised_statements.to_csv(categorised_statements_path)
     # import pandas as pd
     # pd.set_option("display.max_columns", None)
-    # print(categorized_statements)
+    # print(categorised_statements)

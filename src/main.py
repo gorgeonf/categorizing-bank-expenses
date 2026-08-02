@@ -16,8 +16,8 @@ def run_pipeline(data_statements: DataFrame, start_date: datetime = None, end_da
     statement = filter_by_date_range(start_date, end_date, data_statements)
 
     cleaned_statements = clean_all_descriptions(statement)
-    categorized_statements = rename_description(cleaned_statements)
-    return categorized_statements
+    categorised_statements = rename_description(cleaned_statements)
+    return categorised_statements
 
 
 def get_full_date_range(statement: DataFrame) -> tuple:
