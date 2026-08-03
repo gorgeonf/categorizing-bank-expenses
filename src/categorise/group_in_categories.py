@@ -167,6 +167,3 @@ if __name__ == "__main__":
     categorised_statements = rename_description(cleaned_statements)
     categorised_statements_path = script_dir / "data" / "categorised_statements.csv"
     categorised_statements.to_csv(categorised_statements_path)
-    # import pandas as pd
-    # pd.set_option("display.max_columns", None)
-    # print(categorised_statements)
