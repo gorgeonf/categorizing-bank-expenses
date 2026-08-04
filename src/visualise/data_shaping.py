@@ -32,6 +32,6 @@ def build_transaction_types_dicts(statement: DataFrame) -> tuple:
 
 
 def build_sub_category_dicts(statement: DataFrame) -> tuple:
-    label = list(set(statement['Sub-Category']))
+    label = list(set(statement['Sub Category']))
     values = []
     return label, values

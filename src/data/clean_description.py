@@ -25,7 +25,7 @@ def clean_description(text, patterns: list[str]) -> str:
 def clean_all_descriptions(data_statements: DataFrame) -> DataFrame:
     patterns = COMMON_PREFIXES
     data_statements['Category'] = data_statements['Category'].apply(clean_description, args=(patterns,))
-    data_statements['Sub-Category'] = data_statements['Category']
+    data_statements['Sub Category'] = data_statements['Category']
     return data_statements
 
 
@@ -35,6 +35,4 @@ if __name__ == "__main__":
     raw_statements = read_bank_statements(bank_statement_path)
 
     cleaned_statement = clean_all_descriptions(raw_statements)
-    print(cleaned_statement)
-
-    cleaned_statement.to_csv('clean_statement.csv')
+    cleaned_statement.to_csv(script_dir / "data/clean_statement.csv")

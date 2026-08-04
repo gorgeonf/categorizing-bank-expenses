@@ -138,7 +138,7 @@ def determine_category(text: str) -> tuple:
         if re.search(pattern, text, re.IGNORECASE):
             if category in COLLAPSE_SUB_CATEGORY:
                 return category, category
-            return text, category  # sub-category stays as original cleaned text
+            return text, category  # Sub Category stays as original cleaned text
     if "SERV" in text.upper():
         return "PAYROLL DEPOSIT SERVICE DE GARDE", "PAYROLL DEPOSIT SERVICE DE GARDE"
     # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
@@ -154,7 +154,7 @@ def apply_determine_category(text: str) -> pd.Series:
 
 
 def rename_description(data_statements: DataFrame) -> DataFrame:
-    data_statements[['Sub-Category', 'Category']] = data_statements['Sub-Category'].apply(apply_determine_category)
+    data_statements[['Sub Category', 'Category']] = data_statements['Sub Category'].apply(apply_determine_category)
     return data_statements
 
 

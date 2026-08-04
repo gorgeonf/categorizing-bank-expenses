@@ -38,7 +38,7 @@ def generate_transaction_types_bar_graph(data: tuple):
 def generate_transaction_types_bar_graph_per_period(sliced_statements: list):
     """
         Grouped bar chart of the 5 transaction types (expenses, income, misc, incoming_transfers,
-        outgoing_transfers) one cluster per period.
+        outgoing_transfers) one cluster per period using build_transaction_types_dicts
 
         :param sliced_statements: list of DataFrames, one per period (e.g. from slice_by_period).
     """
@@ -237,3 +237,70 @@ def generate_pie_chart_helper(data: dict, title: str):
     plt.show()
 
 
+def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_category: list):
+    """
+        Grouped bar chart of one or several sub-categories per period.
+
+        :param sliced_statements: list of DataFrames, one per period (e.g. from slice_by_period).
+        :param sub_category: list of Sub Category we want to see on the graph
+    """
+    labels = np.array(sub_category)
+    y = []
+    xticks = []
+    for data in sliced_statements:
+        xticks.append(data.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
+        for sub  in sub_category:
+            sub_mask = data['Sub Category'] == sub
+            y.append(np.array(data.loc[sub_mask, 'CAD$'].sum()))
+
+    # Convert y from a list of N arrays into a 2D NumPy array of shape (N, 5)
+    y_matrix = np.array(y)
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    width = 0.15
+    x = np.arange(len(y))
+
+    # plot data in grouped manner of bar type
+    for sub in sub_category:
+        ax.bar(x - 2 * width, y_matrix[:, 0], width, color='red', label=labels[0])
+
+    for container in ax.containers:
+        ax.bar_label(
+            container,
+            labels=[f"{val:,.2f}".replace(",", " ") + "$" if val != 0 else "" for val in container.datavalues],
+            # Formats numbers as flat currency strings
+            padding=3,  # Space in points between the top of the bar and the label text
+            fontsize=9,  # Adjust text size to keep it neat
+            weight='bold'  # Makes the numbers crisp and highly readable
+        )
+
+    ax.grid(axis='y', linestyle=':', linewidth=1, color='gray', alpha=0.4)
+
+    # Delimit time period with separation lines
+    for i in range(len(x) - 1):
+        midpoint = (x[i] + x[i + 1]) / 2
+        ax.axvline(
+            x=midpoint,
+            color='grey',  # Strong color to make boundaries obvious
+            linestyle='-',  # Solid line style to distinguish from the dotted grid
+            linewidth=1.2,  # Thickness of the separation lines
+            alpha=0.2  # Semi-transparent so it stays in the background
+        )
+
+    # Basic layout settings
+    ax.set_xticks(x)
+    ax.set_xticklabels(xticks)
+    ax.tick_params(axis='x', which='both', length=0, pad=10)
+
+    plt.xlabel("Time Period", fontsize=12, labelpad=10)
+    plt.ylabel("CAD$", fontsize=12)
+
+    plt.margins(y=0.2)
+    plt.legend(loc="upper right")
+    start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
+    end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
+    plt.title(f"Statement by Period\n"
+              f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
+    plt.tight_layout()
+    plt.show()

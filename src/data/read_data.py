@@ -18,8 +18,8 @@ def read_bank_statements(file_path: Path) -> DataFrame:
     bank_statements['Description 2'] = bank_statements['Description 1']
     bank_statements = bank_statements.rename(columns={'Description 2': 'Category'})
 
-    # New column that will be -> 'Sub-Category'
-    bank_statements['Sub-Category'] = bank_statements['Description 1']
+    # New column that will be -> 'Sub_Category'
+    bank_statements['Sub Category'] = bank_statements['Description 1']
 
     # Convert dates from string to datetimes
     bank_statements['Transaction Date'] = pd.to_datetime(bank_statements['Transaction Date'], format='%m/%d/%Y')
@@ -27,8 +27,8 @@ def read_bank_statements(file_path: Path) -> DataFrame:
     # Sort data by date to ensure iloc[0] and iloc[-1] are true start/end points
     bank_statements = bank_statements.sort_values('Transaction Date')
 
-    # Only keep 'Transaction Date', 'Description 1', 'Sub-Category', 'Category', 'CAD$'
-    return bank_statements[['Transaction Date', 'Description 1', 'Sub-Category', 'Category', 'CAD$']]
+    # Only keep 'Transaction Date', 'Description 1', 'Sub_Category', 'Category', 'CAD$'
+    return bank_statements[['Transaction Date', 'Description 1', 'Sub Category', 'Category', 'CAD$']]
 
 
 if __name__ == "__main__":
