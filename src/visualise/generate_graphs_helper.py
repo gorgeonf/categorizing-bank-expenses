@@ -8,7 +8,8 @@ from visualise.data_shaping import build_transaction_types_dicts
 from visualise.generate_graphs import (generate_transaction_types_bar_graph_per_period,
                                        generate_balance_bar_graph_per_period,
                                        generate_balance_graph,
-                                       generate_transaction_types_bar_graph, generate_sub_category_bar_graph_per_period)
+                                       generate_transaction_types_bar_graph, generate_sub_category_bar_graph_per_period,
+                                       generate_sub_category_line_graph_per_period)
 
 
 def get_categorise_statements(start_date: str, end_date: str, bank_statement_path: Path):
@@ -104,6 +105,15 @@ def generate_sub_category_bar_graph_per_period_helper(start_date: str, end_date:
     generate_sub_category_bar_graph_per_period(period_statements, sub_category)
 
 
+def generate_sub_category_line_graph_per_period_helper(start_date: str, end_date: str, bank_statement_path: Path,
+                                                      sub_category: list):
+    """
+
+    """
+    period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
+    generate_sub_category_line_graph_per_period(period_statements, sub_category)
+
+
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
@@ -113,4 +123,5 @@ if __name__ == "__main__":
     # generate_transaction_types_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
     # generate_balance_pie_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
     # generate_balance_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    generate_sub_category_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path, ["MISC PAYMENT SUN LIFE",  "OXIO.CA"])
+    # generate_sub_category_bar_graph_per_period_helper("01/01/2026", "01/08/2026", bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS"])
+    generate_sub_category_line_graph_per_period_helper("01/01/2026", "01/08/2026", bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS"])
