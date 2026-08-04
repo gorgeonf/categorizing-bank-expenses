@@ -108,9 +108,9 @@ if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
 
-    generate_balance_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    generate_transaction_types_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    generate_transaction_types_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    generate_balance_pie_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    generate_balance_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    # generate_sub_category_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path, ["DENMAN_ATHLETICS"])
+    # generate_balance_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path)
+    # generate_transaction_types_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path)
+    # generate_transaction_types_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
+    # generate_balance_pie_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
+    # generate_balance_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
+    generate_sub_category_bar_graph_per_period_helper("01/04/2026", "01/08/2026", bank_statement_path, ["MISC PAYMENT SUN LIFE",  "OXIO.CA"])

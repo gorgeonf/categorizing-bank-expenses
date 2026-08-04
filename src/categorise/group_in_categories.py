@@ -123,6 +123,26 @@ ALL_CATEGORIES = {key: value for key, value in globals().items() if
 
 COLLAPSE_SUB_CATEGORY = {"COSTCO", "DENMAN_ATHLETICS", "RENT", "ALCOHOL"}
 
+# For Categories in ALL_CATEGORIES
+KEYWORD_SUB_CATEGORY_OVERRIDE = {
+    "HYDRO": "HYDRO",
+    "LONDON DRUGS": "LONDON DRUGS",
+    "PETRO-CANADA": "PETRO CANADA",
+    "CHV": "PETROL CHEVRON CANADA",
+    "AURELIE YOGACOACHING": "AURELIE YOGACOACHING "
+    # future examples: "SOME KEYWORD": "FIXED SUB-CATEGORY NAME"
+}
+
+# For Categories outside of ALL_CATEGORIES
+FULL_OVERRIDE_KEYWORDS = {
+    "SERV": "PAYROLL DEPOSIT SERVICE DE GARDE",
+    "PAYROLL DEPOSIT HP": "PAYROLL DEPOSIT HP",
+    "MOBILE CHEQUE DEPOSIT": "CHEQUE DEPOSIT",
+    "SUN LIFE": "SUN LIFE PAYMENT",
+    "ATM WITHDRAWAL": "ATM WITHDRAWAL",
+}
+
+
 def determine_category(text: str) -> tuple:
     """
     Maps a cleaned transaction description to (sub_category, category).
@@ -138,14 +158,20 @@ def determine_category(text: str) -> tuple:
         if re.search(pattern, text, re.IGNORECASE):
             if category in COLLAPSE_SUB_CATEGORY:
                 return category, category
+            for keyword, override in KEYWORD_SUB_CATEGORY_OVERRIDE.items():
+                if keyword in text.upper():
+                    return override, category
             return text, category  # Sub Category stays as original cleaned text
-    if "SERV" in text.upper():
-        return "PAYROLL DEPOSIT SERVICE DE GARDE", "PAYROLL DEPOSIT SERVICE DE GARDE"
+    # if "SERV" in text.upper():
+    #     return "PAYROLL DEPOSIT SERVICE DE GARDE", "PAYROLL DEPOSIT SERVICE DE GARDE"
     # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
-    elif any(word in text for word in ONLINE_TRANSFER):
+    for keyword, override in FULL_OVERRIDE_KEYWORDS.items():
+        if keyword in text.upper():
+            return override, override
+    if any(word in text for word in ONLINE_TRANSFER):
         return "BANKING TRANSFER", "BANKING TRANSFER"
-    elif "MOBILE CHEQUE DEPOSIT" in text.upper():
-        return "CHEQUE DEPOSIT", "CHEQUE DEPOSIT"
+    # elif "MOBILE CHEQUE DEPOSIT" in text.upper():
+    #     return "CHEQUE DEPOSIT", "CHEQUE DEPOSIT"
     return text, text
 
 

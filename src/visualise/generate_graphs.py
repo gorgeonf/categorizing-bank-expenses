@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from pandas.core.interchange.dataframe_protocol import DataFrame
@@ -249,11 +247,14 @@ def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_cate
     xticks = []
     for data in sliced_statements:
         xticks.append(data.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
-        for sub  in sub_category:
+        tmp_array = []
+        for sub in sub_category:
             sub_mask = data['Sub Category'] == sub
-            y.append(np.array(data.loc[sub_mask, 'CAD$'].sum()))
+            tmp_array.append(data.loc[sub_mask, 'CAD$'].sum())
+        y.append(np.array(tmp_array))
 
-    # Convert y from a list of N arrays into a 2D NumPy array of shape (N, 5)
+    # Convert y from a list of len(sliced_statements) arrays
+    # into a 2D NumPy array of shape ( len(sliced_statements), len(sub_category) )
     y_matrix = np.array(y)
 
     fig, ax = plt.subplots(figsize=(12, 7))
@@ -261,9 +262,14 @@ def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_cate
     width = 0.15
     x = np.arange(len(y))
 
+    cmap = plt.get_cmap('Set3')
+    colors_categories = [cmap(i / len(labels)) for i in range(len(labels))]
+
     # plot data in grouped manner of bar type
-    for sub in sub_category:
-        ax.bar(x - 2 * width, y_matrix[:, 0], width, color='red', label=labels[0])
+    for i in range(len(sub_category)):
+        n = len(sub_category)
+        offset = (i - (n - 1) / 2) * width
+        ax.bar(x + offset, y_matrix[:, i], width, color=colors_categories[i], label=labels[i])
 
     for container in ax.containers:
         ax.bar_label(
@@ -300,7 +306,7 @@ def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_cate
     plt.legend(loc="upper right")
     start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    plt.title(f"Statement by Period\n"
+    plt.title(f"Sub-Category Comparison by Period\n"
               f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()
