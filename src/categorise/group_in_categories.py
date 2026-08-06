@@ -28,9 +28,11 @@ IMMIGRATION_AUSTRALIA = {"GURULLY", "PEARSON", "LINKEDIN", "INTERNATIONAL REMITT
 
 DENMAN_ATHLETICS = {"DENMAN ATHLETIC"}
 
-ALCOHOL = {"BC LIQUOR", }
+VANCOUVER_COMMUNITY_CENTER = {"VANCOUVER PUBLI", "VANCOUVER PB RE"}
 
-YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "NANCY GIRARD"}
+ALCOHOL = {"BC LIQUOR", "MARQUIS WINE CE", }
+
+YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "ZENSURANCE.COM", "NANCY GIRARD"}
 
 COFFEES = {"SQ *CHEZ NOUS B",
            "BLENZ ON DENMAN",
@@ -118,8 +120,10 @@ HEALTH = {"SHOPPERS DRUG M",
 
 TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
 
+# ALL_CATEGORIES = {key: value for key, value in globals().items() if
+#                   (isinstance(value, set) and key not in ["INCOME", "ONLINE_TRANSFER"])}
 ALL_CATEGORIES = {key: value for key, value in globals().items() if
-                  (isinstance(value, set) and key not in ["INCOME", "ONLINE_TRANSFER"])}
+                  isinstance(value, set) and key not in ["ONLINE_TRANSFER"]}
 
 COLLAPSE_SUB_CATEGORY = {"COSTCO", "DENMAN_ATHLETICS", "RENT", "ALCOHOL"}
 
@@ -132,17 +136,14 @@ KEYWORD_SUB_CATEGORY_OVERRIDE = {
     "AURELIE YOGACOACHING": "AURELIE YOGACOACHING",
     "COMPASS WEB": "COMPASS",
     "PUBLIC MOBILE S": "PUBLIC MOBILE",
-    "OXIO": "OXIO"
+    "OXIO": "OXIO",
     # future examples: "SOME KEYWORD": "FIXED SUB-CATEGORY NAME"
-}
-
-# For Categories outside of ALL_CATEGORIES
-FULL_OVERRIDE_KEYWORDS = {
     "SERV": "PAYROLL DEPOSIT SERVICE DE GARDE",
     "PAYROLL DEPOSIT HP": "PAYROLL DEPOSIT HP",
     "MOBILE CHEQUE DEPOSIT": "CHEQUE DEPOSIT",
     "MISC PAYMENT SUN LIFE": "SUN LIFE REIMBURSEMENT",
     "ATM WITHDRAWAL": "ATM WITHDRAWAL",
+    "BÉATRICE LAROUCHE": "AURELIE YOGACOACHING"
 }
 
 
@@ -165,16 +166,9 @@ def determine_category(text: str) -> tuple:
                 if keyword in text.upper():
                     return override, category
             return text, category  # Sub Category stays as original cleaned text
-    # if "SERV" in text.upper():
-    #     return "PAYROLL DEPOSIT SERVICE DE GARDE", "PAYROLL DEPOSIT SERVICE DE GARDE"
     # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
-    for keyword, override in FULL_OVERRIDE_KEYWORDS.items():
-        if keyword in text.upper():
-            return override, override
     if any(word in text for word in ONLINE_TRANSFER):
         return "BANKING TRANSFER", "BANKING TRANSFER"
-    # elif "MOBILE CHEQUE DEPOSIT" in text.upper():
-    #     return "CHEQUE DEPOSIT", "CHEQUE DEPOSIT"
     return text, text
 
 

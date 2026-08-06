@@ -235,27 +235,28 @@ def generate_pie_chart_helper(data: dict, title: str):
     plt.show()
 
 
-def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_category: list):
+def generate_grouped_bar_graph_per_period(sliced_statements: list, group: list, column: str):
     """
-        Grouped bar chart of one or several sub-categories per period.
+        Grouped bar chart of one or several Category or Sub Category values per period.
 
         :param sliced_statements: list of DataFrames, one per period (e.g. from slice_by_period).
-        :param sub_category: list of Sub Category we want to see on the graph
+        :param group: list of values (Category or Sub Category) we want to see on the graph.
+        :param column: which column to group by — 'Category' or 'Sub Category'.
     """
-    set_sub_category = set(sub_category)
-    all_sub_categories = set(pd.concat(sliced_statements, ignore_index=True)['Sub Category'])
+    set_sub_category = set(group)
+    all_sub_categories = set(pd.concat(sliced_statements, ignore_index=True)[column])
     for sub in set_sub_category:
         if sub not in all_sub_categories:
-           raise ValueError(f"Sub category {sub} does not exist in the statement.")
+           raise ValueError(f"{column} {sub} does not exist in the statement.")
 
-    labels = np.array(sub_category)
+    labels = np.array(group)
     y = []
     xticks = []
     for data in sliced_statements:
         xticks.append(data.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
         tmp_array = []
-        for sub in sub_category:
-            sub_mask = data['Sub Category'] == sub
+        for sub in group:
+            sub_mask = data[column] == sub
             tmp_array.append(data.loc[sub_mask, 'CAD$'].sum())
         y.append(np.array(tmp_array))
 
@@ -272,10 +273,10 @@ def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_cate
     colors_categories = [cmap(i / len(labels)) for i in range(len(labels))]
 
     # plot data in grouped manner of bar type
-    for i in range(len(sub_category)):
+    for i in range(len(group)):
         total = y_matrix[:, i].sum()
         label = f"{labels[i]}    Total: {total:,.2f}$".replace(",", " ")
-        n = len(sub_category)
+        n = len(group)
         offset = (i - (n - 1) / 2) * width
         ax.bar(x + offset, y_matrix[:, i], width, color=colors_categories[i], label=label)
 
@@ -314,7 +315,7 @@ def generate_sub_category_bar_graph_per_period(sliced_statements: list, sub_cate
     plt.legend(loc="lower right")
     start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    plt.title(f"Sub-Category Comparison by Period\n"
+    plt.title(f"{column} Comparison by Period\n"
               f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from categorise.group_in_categories import rename_description
+from categorise.group_in_categories import rename_description, ALL_CATEGORIES
 from data.clean_description import clean_all_descriptions
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
 from data.read_data import read_bank_statements
@@ -8,8 +8,9 @@ from visualise.data_shaping import build_transaction_types_dicts
 from visualise.generate_graphs import (generate_transaction_types_bar_graph_per_period,
                                        generate_balance_bar_graph_per_period,
                                        generate_balance_graph,
-                                       generate_transaction_types_bar_graph, generate_sub_category_bar_graph_per_period,
-                                       generate_sub_category_line_graph_per_period)
+                                       generate_transaction_types_bar_graph,
+                                       generate_sub_category_line_graph_per_period,
+                                       generate_grouped_bar_graph_per_period)
 
 
 def get_categorise_statements(start_date: str, end_date: str, bank_statement_path: Path):
@@ -19,6 +20,33 @@ def get_categorise_statements(start_date: str, end_date: str, bank_statement_pat
 
     cleaned_statements = clean_all_descriptions(bank_statements)
     return rename_description(cleaned_statements)
+
+
+"""
+Gets the list of sub categories for the category INCOME
+"""
+
+
+def generate_income_sub_categories(sliced_statements: list) -> list:
+    income_subs = set()
+    for df in sliced_statements:
+        sub_mask = df['Category'] == "INCOME"
+        income_subs.update(df.loc[sub_mask, 'Sub Category'])
+    return sorted(income_subs)
+
+
+"""
+Gets the list of categories in Expenses 
+"""
+
+
+def generate_expenses_categories(sliced_statements: list) -> list:
+    expenses_categories = set()
+    for df in sliced_statements:
+        # sub_mask = (df['CAD$'] < 0) & (df['Category'] != "BANKING TRANSFER")
+        sub_mask = (df['CAD$'] < 0) & (df['Category'].isin(ALL_CATEGORIES.keys()))
+        expenses_categories.update(df.loc[sub_mask, 'Category'])
+    return sorted(expenses_categories)
 
 
 def get_monthly_statements(start_date: str, end_date: str, bank_statement_path: Path):
@@ -96,17 +124,17 @@ def generate_transaction_types_bar_graph_helper(start_date: str, end_date: str, 
     generate_transaction_types_bar_graph(transaction_dict)
 
 
-def generate_sub_category_bar_graph_per_period_helper(start_date: str, end_date: str, bank_statement_path: Path,
-                                                      sub_category: list):
+def generate_grouped_bar_graph_per_period_helper(start_date: str, end_date: str, bank_statement_path: Path,
+                                                 group: list, column="Sub Category"):
     """
 
     """
     period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
-    generate_sub_category_bar_graph_per_period(period_statements, sub_category)
+    generate_grouped_bar_graph_per_period(period_statements, group, column)
 
 
 def generate_sub_category_line_graph_per_period_helper(start_date: str, end_date: str, bank_statement_path: Path,
-                                                      sub_category: list):
+                                                       sub_category: list):
     """
 
     """
@@ -123,5 +151,10 @@ if __name__ == "__main__":
     # generate_transaction_types_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
     # generate_balance_pie_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
     # generate_balance_bar_graph_helper("01/04/2026", "01/08/2026", bank_statement_path)
-    # generate_sub_category_bar_graph_per_period_helper("01/01/2026", "01/08/2026", bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS"])
-    generate_sub_category_line_graph_per_period_helper("01/01/2026", "01/08/2026", bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS"])
+    sliced_statements = get_monthly_statements("01/04/2026", "01/08/2026", bank_statement_path)
+
+    income = generate_income_sub_categories(sliced_statements)
+    # generate_grouped_bar_graph_per_period_helper("01/06/2026", "01/08/2026", bank_statement_path, income)
+    # generate_sub_category_line_graph_per_period_helper("01/01/2026", "01/08/2026", bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS"])
+    expenses = generate_expenses_categories(sliced_statements)
+    generate_grouped_bar_graph_per_period_helper("01/06/2026", "01/08/2026", bank_statement_path, expenses, "Category")

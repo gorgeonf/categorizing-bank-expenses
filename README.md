@@ -41,6 +41,12 @@ data/                     # Bank statement CSVs (gitignored — not included in 
 4. **Categorise** — `rename_description()` matches each merchant against a keyword dictionary to assign a Category.
 5. **Visualise** — the resulting data can be summarised and charted in several ways: totals, per-period comparisons, category breakdowns, and income/expense balance.
 
+## Bank statements format
+
+This project was designed to help me visualise my personal bank statement, so the format is taken from my personal data.
+CSV files with this format:
+```Account Type,Account Number,Transaction Date,Cheque Number,Description 1,Description 2,CAD$,USD$```
+
 ## Categories
 
 Category definitions (which merchant keywords map to which category) are kept out of this repository, since they contain personal transaction data. See `categorise/group_in_categories.py` for the matching logic.
