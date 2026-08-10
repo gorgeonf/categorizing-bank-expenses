@@ -1,6 +1,8 @@
-from pandas import DataFrame
+import pandas as pd
+from pandas import DataFrame, Timestamp
 
 from categorise.group_in_categories import ALL_CATEGORIES
+from data.date_utils import parse_date
 
 
 def sum_categories(statement: DataFrame, categories: set) -> dict:
@@ -35,3 +37,21 @@ def build_sub_category_dicts(statement: DataFrame) -> tuple:
     label = list(set(statement['Sub Category']))
     values = []
     return label, values
+
+
+def get_balance_start_end_date_from_strings(start_date: str, end_date: str, balance: DataFrame) -> tuple:
+    targets = pd.DataFrame({'Date': [parse_date(start_date), parse_date(end_date)]})
+    matched = pd.merge_asof(targets, balance, on='Date', direction='nearest')
+
+    start_balance = matched.iloc[0]['Balance']
+    end_balance = matched.iloc[1]['Balance']
+    return start_balance, end_balance
+
+
+def get_balance_start_end_date_from_timestamps(start_date: Timestamp, end_date: Timestamp, balance: DataFrame) -> tuple:
+    targets = pd.DataFrame({'Date': [start_date, end_date]})
+    matched = pd.merge_asof(targets, balance, on='Date', direction='nearest')
+
+    start_balance = matched.iloc[0]['Balance']
+    end_balance = matched.iloc[1]['Balance']
+    return start_balance, end_balance

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
-from visualise.data_shaping import build_transaction_types_dicts
+from visualise.data_shaping import build_transaction_types_dicts, get_balance_start_end_date_from_timestamps
 
 pd.set_option('display.max_columns', None)
 import matplotlib.pyplot as plt
@@ -247,7 +247,7 @@ def generate_grouped_bar_graph_per_period(sliced_statements: list, group: list, 
     all_sub_categories = set(pd.concat(sliced_statements, ignore_index=True)[column])
     for sub in set_sub_category:
         if sub not in all_sub_categories:
-           raise ValueError(f"{column} {sub} does not exist in the statement.")
+            raise ValueError(f"{column} {sub} does not exist in the statement.")
 
     labels = np.array(group)
     y = []
@@ -312,13 +312,14 @@ def generate_grouped_bar_graph_per_period(sliced_statements: list, group: list, 
     plt.ylabel("CAD$", fontsize=12)
 
     plt.margins(y=0.2)
-    plt.legend(loc="lower right")
+    plt.legend(loc="upper right")
     start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
     plt.title(f"{column} Comparison by Period\n"
               f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()
+
 
 def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_category: list):
     """
@@ -373,5 +374,126 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
     end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
     plt.title(f"Sub Category Trend by Period\n"
               f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
+    plt.tight_layout()
+    plt.show()
+
+
+def generate_line_graph_actual_balance_change_per_period(period_statements, balance_df):
+    """
+        actual_change = end_balance - start_balance
+    """
+    actual_change = []
+    incoming_transfer = []
+    outgoing_transfer = []
+    income_values = []
+    xticks = []
+
+    for statement in period_statements:
+        start_date = statement.iloc[0]['Transaction Date']
+        end_date = statement.iloc[-1]['Transaction Date']
+        balance_start, balance_end = get_balance_start_end_date_from_timestamps(start_date, end_date, balance_df)
+        xticks.append(statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
+        actual_change.append(balance_end - balance_start)
+
+        # print(f"{statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper()}")
+        # print(f"{balance_end}-{balance_start} = {balance_end - balance_start}\n")
+
+        incoming_mask = (statement['CAD$'] > 0) & (statement['Category'] == "BANKING TRANSFER")
+        incoming = statement.loc[incoming_mask, 'CAD$'].sum()
+        incoming_transfer.append(incoming)
+
+        outgoing_mask = (statement['CAD$'] < 0) & (statement['Category'] == "BANKING TRANSFER")
+        outgoing = statement.loc[outgoing_mask, 'CAD$'].sum()
+        outgoing_transfer.append(outgoing)
+
+        income_mask = (statement['CAD$'] > 0) & (statement['Category'] != "BANKING TRANSFER")
+        income = statement.loc[income_mask, 'CAD$'].sum()
+        income_values.append(income)
+
+    # Convert to a numpy array for consistent array operations
+    actual_change = np.array(actual_change)
+    incoming_transfer = np.array(incoming_transfer)
+    outgoing_transfer = np.array(outgoing_transfer)
+    income_values = np.array(income_values)
+
+    x = np.arange(len(actual_change))
+
+    # Initialize the plot
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    # --- LINE 1: ACTUAL BALANCE CHANGE ---
+    total_change = actual_change.sum()
+    label_change = f"Net Change: {total_change:,.2f}$".replace(",", " ")
+    ax.plot(x, actual_change, marker='o', color='blue', linewidth=2.5, label=label_change)
+
+    for xi, yi in zip(x, actual_change):
+        if yi != 0:
+            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                        (xi, yi), textcoords="offset points", xytext=(0, 8),
+                        ha='center', fontsize=8, weight='bold', color='blue')
+
+    # --- LINE 2: INCOMING TRANSFERS ---
+    total_incoming = incoming_transfer.sum()
+    label_incoming = f"Incoming Transfers: {total_incoming:,.2f}$".replace(",", " ")
+    ax.plot(x, incoming_transfer, marker='s', color='cyan', linewidth=2.5, label=label_incoming)
+
+    for xi, yi in zip(x, incoming_transfer):
+        if yi != 0:
+            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                        (xi, yi), textcoords="offset points", xytext=(0, 8),
+                        ha='center', fontsize=8, weight='bold', color='cyan')
+
+    # --- LINE 3: OUTGOING TRANSFERS ---
+    total_outgoing = outgoing_transfer.sum()
+    label_outgoing = f"Outgoing Transfers: {total_outgoing:,.2f}$".replace(",", " ")
+    ax.plot(x, outgoing_transfer, marker='s', color='red', linewidth=2.5, label=label_outgoing)
+
+    for xi, yi in zip(x, outgoing_transfer):
+        if yi != 0:
+            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                        (xi, yi), textcoords="offset points", xytext=(0, 8),
+                        ha='center', fontsize=8, weight='bold', color='red')
+
+    # --- LINE 4: INCOME RECEIVED ---
+    total_income = income_values.sum()
+    label_income = f"Income received: {total_income:,.2f}$".replace(",", " ")
+    ax.plot(x, income_values, marker='s', color='green', linewidth=2.5, label=label_income)
+
+    for xi, yi in zip(x, income_values):
+        if yi != 0:
+            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                        (xi, yi), textcoords="offset points", xytext=(0, 8),
+                        ha='center', fontsize=8, weight='bold', color='green')
+
+    # Delimit time period with separation lines
+    for i in range(len(x) - 1):
+        midpoint = (x[i] + x[i + 1]) / 2
+        ax.axvline(
+            x=midpoint,
+            color='grey',  # Strong color to make boundaries obvious
+            linestyle='-',  # Solid line style to distinguish from the dotted grid
+            linewidth=1.2,  # Thickness of the separation lines
+            alpha=0.2  # Semi-transparent so it stays in the background
+        )
+
+    # --- GRAPH FORMATTING ---
+    ax.axhline(0, color='black', linestyle='-', linewidth=0.8, alpha=0.3)
+    ax.grid(axis='y', linestyle=':', linewidth=1, color='gray', alpha=0.4)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(xticks)
+    ax.tick_params(axis='x', which='both', length=0, pad=10)
+
+    plt.xlabel("Time Period", fontsize=12, labelpad=10)
+    plt.ylabel("CAD$", fontsize=12)
+
+    plt.margins(y=0.2)
+    plt.legend(loc="lower right")
+
+    start_period = period_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
+    end_period = period_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
+    plt.title(f"Balance Change vs Other Indicators\n"
+              f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
+
     plt.tight_layout()
     plt.show()

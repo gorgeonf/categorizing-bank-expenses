@@ -31,7 +31,24 @@ def read_bank_statements(file_path: Path) -> DataFrame:
     return bank_statements[['Transaction Date', 'Description 1', 'Sub Category', 'Category', 'CAD$']]
 
 
+def read_balance_document(file_path: Path) -> DataFrame:
+    balance = pd.read_csv(file_path)
+
+    # Convert dates from string 2026-07-17 to datetimes
+    balance['Date'] = pd.to_datetime(balance['Date'], format='%Y-%m-%d')
+
+    balance['Balance'] = balance['Balance'].apply(lambda x: float(x.replace('$', '')))
+
+    # Sort data by date to ensure iloc[0] and iloc[-1] are true start/end points
+    balance = balance.sort_values('Date')
+
+    return balance
+
+
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
     statements = read_bank_statements(bank_statement_path)
+
+    balance_path = script_dir / "data" / "RBC_Balance.csv"
+    balance_df = read_balance_document(balance_path)

@@ -120,8 +120,6 @@ HEALTH = {"SHOPPERS DRUG M",
 
 TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
 
-# ALL_CATEGORIES = {key: value for key, value in globals().items() if
-#                   (isinstance(value, set) and key not in ["INCOME", "ONLINE_TRANSFER"])}
 ALL_CATEGORIES = {key: value for key, value in globals().items() if
                   isinstance(value, set) and key not in ["ONLINE_TRANSFER"]}
 
