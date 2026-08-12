@@ -385,7 +385,11 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
     actual_change = []
     incoming_transfer = []
     outgoing_transfer = []
-    income_values = []
+    income = []
+    expenses = []
+
+    net_change = []
+
     xticks = []
 
     for statement in period_statements:
@@ -394,9 +398,6 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
         balance_start, balance_end = get_balance_start_end_date_from_timestamps(start_date, end_date, balance_df)
         xticks.append(statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
         actual_change.append(balance_end - balance_start)
-
-        # print(f"{statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper()}")
-        # print(f"{balance_end}-{balance_start} = {balance_end - balance_start}\n")
 
         incoming_mask = (statement['CAD$'] > 0) & (statement['Category'] == "BANKING TRANSFER")
         incoming = statement.loc[incoming_mask, 'CAD$'].sum()
@@ -407,35 +408,58 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
         outgoing_transfer.append(outgoing)
 
         income_mask = (statement['CAD$'] > 0) & (statement['Category'] != "BANKING TRANSFER")
-        income = statement.loc[income_mask, 'CAD$'].sum()
-        income_values.append(income)
+        income_sum = statement.loc[income_mask, 'CAD$'].sum()
+        income.append(income_sum)
+
+        expenses_mask = (statement['CAD$'] < 0) & (statement['Category'] != "BANKING TRANSFER")
+        expenses_sum = statement.loc[expenses_mask, 'CAD$'].sum()
+        expenses.append(expenses_sum)
+
+        net_change.append(incoming + outgoing + income_sum + expenses_sum)
 
     # Convert to a numpy array for consistent array operations
-    actual_change = np.array(actual_change)
+    # actual_change = np.array(actual_change)
+    # x = np.arange(len(actual_change))
+
+    net_change = np.array(net_change)
+    x = np.arange(len(net_change))
+
     incoming_transfer = np.array(incoming_transfer)
     outgoing_transfer = np.array(outgoing_transfer)
-    income_values = np.array(income_values)
-
-    x = np.arange(len(actual_change))
+    income = np.array(income)
+    expenses = np.array(expenses)
 
     # Initialize the plot
     fig, ax = plt.subplots(figsize=(12, 7))
 
     # --- LINE 1: ACTUAL BALANCE CHANGE ---
-    total_change = actual_change.sum()
-    label_change = f"Net Change: {total_change:,.2f}$".replace(",", " ")
-    ax.plot(x, actual_change, marker='o', color='blue', linewidth=2.5, label=label_change)
+    # total_change = actual_change.sum()
+    # label_change = f"Net Change: {total_change:,.2f}$".replace(",", " ")
+    # ax.plot(x, actual_change, marker='o', color='blue', linewidth=1.5, label=label_change)
+    #
+    # for xi, yi in zip(x, actual_change):
+    #     if yi != 0:
+    #         ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+    #                     (xi, yi), textcoords="offset points", xytext=(0, 8),
+    #                     ha='center', fontsize=8, weight='bold', color='blue')
 
-    for xi, yi in zip(x, actual_change):
+    # --- LINE 1: NET CHANGE ---
+    total_change = net_change.sum()
+    label_change = f"Net Change: {total_change:,.2f}$".replace(",", " ")
+    ax.plot(x, net_change, marker='o', markersize=4, color='red', linewidth=1.5,
+            linestyle=':', label=label_change)
+
+    for xi, yi in zip(x, net_change):
         if yi != 0:
             ax.annotate(f"{yi:,.2f}$".replace(",", " "),
                         (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='blue')
+                        ha='center', fontsize=8, weight='bold', color='red')
 
     # --- LINE 2: INCOMING TRANSFERS ---
     total_incoming = incoming_transfer.sum()
     label_incoming = f"Incoming Transfers: {total_incoming:,.2f}$".replace(",", " ")
-    ax.plot(x, incoming_transfer, marker='s', color='cyan', linewidth=2.5, label=label_incoming)
+    ax.plot(x, incoming_transfer, marker='s', markersize=4, color='cyan', linewidth=1.5,
+            linestyle=':', label=label_incoming)
 
     for xi, yi in zip(x, incoming_transfer):
         if yi != 0:
@@ -446,24 +470,38 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
     # --- LINE 3: OUTGOING TRANSFERS ---
     total_outgoing = outgoing_transfer.sum()
     label_outgoing = f"Outgoing Transfers: {total_outgoing:,.2f}$".replace(",", " ")
-    ax.plot(x, outgoing_transfer, marker='s', color='red', linewidth=2.5, label=label_outgoing)
+    ax.plot(x, outgoing_transfer, marker='s', markersize=4, color='blue', linewidth=1.5,
+            linestyle=':', label=label_outgoing)
 
     for xi, yi in zip(x, outgoing_transfer):
         if yi != 0:
             ax.annotate(f"{yi:,.2f}$".replace(",", " "),
                         (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='red')
+                        ha='center', fontsize=8, weight='bold', color='blue')
 
     # --- LINE 4: INCOME RECEIVED ---
-    total_income = income_values.sum()
+    total_income = income.sum()
     label_income = f"Income received: {total_income:,.2f}$".replace(",", " ")
-    ax.plot(x, income_values, marker='s', color='green', linewidth=2.5, label=label_income)
+    ax.plot(x, income, marker='s', markersize=4, color='green', linewidth=1.5,
+            linestyle=':', label=label_income)
 
-    for xi, yi in zip(x, income_values):
+    for xi, yi in zip(x, income):
         if yi != 0:
             ax.annotate(f"{yi:,.2f}$".replace(",", " "),
                         (xi, yi), textcoords="offset points", xytext=(0, 8),
                         ha='center', fontsize=8, weight='bold', color='green')
+
+    # --- LINE 5: EXPENSES ---
+    total_expenses = expenses.sum()
+    label_expenses = f"Expenses: {total_expenses:,.2f}$".replace(",", " ")
+    ax.plot(x, expenses, marker='s', markersize=4, color='magenta', linewidth=1.5,
+            linestyle=':', label=label_expenses)
+
+    for xi, yi in zip(x, expenses):
+        if yi != 0:
+            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                        (xi, yi), textcoords="offset points", xytext=(0, 8),
+                        ha='center', fontsize=8, weight='bold', color='magenta')
 
     # Delimit time period with separation lines
     for i in range(len(x) - 1):
@@ -492,7 +530,7 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
 
     start_period = period_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = period_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    plt.title(f"Balance Change vs Other Indicators\n"
+    plt.title(f"Chequing account transactions\n"
               f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
 
     plt.tight_layout()

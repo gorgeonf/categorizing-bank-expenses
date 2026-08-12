@@ -32,7 +32,7 @@ VANCOUVER_COMMUNITY_CENTER = {"VANCOUVER PUBLI", "VANCOUVER PB RE"}
 
 ALCOHOL = {"BC LIQUOR", "MARQUIS WINE CE", }
 
-YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "ZENSURANCE.COM", "NANCY GIRARD"}
+YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "ZENSURANCE.COM", "NANCY GIRARD", "CYNTHIA DOMINGUE", "BÉATRICE LAROUCHE"}
 
 COFFEES = {"SQ *CHEZ NOUS B",
            "BLENZ ON DENMAN",
@@ -70,6 +70,9 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "TST-TACOFINO TO",
                "WHITE RABBIT CO",
                "YAYU CAFE & RES",
+               "OLYMPIA ON DENM",
+               "BANGKOK BISTRO",
+               "SAINAM RESTAURA"
                }
 
 ONLINE_TRANSFER = {"ONLINE TRANSFER", "ONLINE BANKING TRANSFER"}
@@ -116,9 +119,10 @@ HEALTH = {"SHOPPERS DRUG M",
           "TOETOSOUL",
           "MSK HEALTH",
           "TUNE UP",
+          "SANDRA BOUCHARD"
           }
 
-TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", }
+TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", "HOTEL AT BOOKIN"}
 
 ALL_CATEGORIES = {key: value for key, value in globals().items() if
                   isinstance(value, set) and key not in ["ONLINE_TRANSFER"]}
