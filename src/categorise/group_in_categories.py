@@ -75,7 +75,15 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "SAINAM RESTAURA"
                }
 
-ONLINE_TRANSFER = {"ONLINE TRANSFER", "ONLINE BANKING TRANSFER"}
+"""
+    - CAD$ < 0 and ONLINE TRANSFER TO DEPOSIT ACCOUNT -> Money transferred to SAVINGS
+    - CAD$ > 0 and ONLINE BANKING TRANSFER -> Money transferred from SAVINGS
+    - CAD$ < 0 and ONLINE BANKING TRANSFER -> Money reimbursed to CREDIT CARD
+"""
+
+ONLINE_TRANSFER = {"ONLINE TRANSFER TO DEPOSIT ACCOUNT", "ONLINE BANKING TRANSFER"}
+
+INVESTMENTS = {"WS Investments"}
 
 GROCERIES = {"WHOLE FOODS MAR",
              "SAFEWAY",
@@ -169,8 +177,10 @@ def determine_category(text: str) -> tuple:
                     return override, category
             return text, category  # Sub Category stays as original cleaned text
     # Outgoing and Incoming Transfers will be differentiated when preparing the data for the graphs
-    if any(word in text for word in ONLINE_TRANSFER):
-        return "BANKING TRANSFER", "BANKING TRANSFER"
+    for sub_category in ONLINE_TRANSFER:
+        if sub_category in text:
+            return sub_category, "BANKING TRANSFER"
+
     return text, text
 
 
