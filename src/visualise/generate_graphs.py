@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+from matplotlib.widgets import CheckButtons
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
-from visualise.data_shaping import build_transaction_types_dicts, get_balance_start_end_date_from_timestamps
+from visualise.data_shaping import build_transaction_types_dicts
 
 pd.set_option('display.max_columns', None)
 import matplotlib.pyplot as plt
@@ -382,23 +383,15 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
     """
         actual_change = end_balance - start_balance
     """
-    actual_change = []
     incoming_transfer = []
     outgoing_transfer = []
     income = []
     expenses = []
-
     net_change = []
 
     xticks = []
 
     for statement in period_statements:
-        start_date = statement.iloc[0]['Transaction Date']
-        end_date = statement.iloc[-1]['Transaction Date']
-        balance_start, balance_end = get_balance_start_end_date_from_timestamps(start_date, end_date, balance_df)
-        xticks.append(statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
-        actual_change.append(balance_end - balance_start)
-
         incoming_mask = (statement['CAD$'] > 0) & (statement['Category'] == "BANKING TRANSFER")
         incoming = statement.loc[incoming_mask, 'CAD$'].sum()
         incoming_transfer.append(incoming)
@@ -418,9 +411,6 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
         net_change.append(incoming + outgoing + income_sum + expenses_sum)
 
     # Convert to a numpy array for consistent array operations
-    # actual_change = np.array(actual_change)
-    # x = np.arange(len(actual_change))
-
     net_change = np.array(net_change)
     x = np.arange(len(net_change))
 
@@ -430,78 +420,104 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
     expenses = np.array(expenses)
 
     # Initialize the plot
-    fig, ax = plt.subplots(figsize=(12, 7))
+    fig = plt.figure(figsize=(14, 7))
+    gs = fig.add_gridspec(2, 2, width_ratios=[4, 1], height_ratios=[1, 1])
 
-    # --- LINE 1: ACTUAL BALANCE CHANGE ---
-    # total_change = actual_change.sum()
-    # label_change = f"Net Change: {total_change:,.2f}$".replace(",", " ")
-    # ax.plot(x, actual_change, marker='o', color='blue', linewidth=1.5, label=label_change)
-    #
-    # for xi, yi in zip(x, actual_change):
-    #     if yi != 0:
-    #         ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-    #                     (xi, yi), textcoords="offset points", xytext=(0, 8),
-    #                     ha='center', fontsize=8, weight='bold', color='blue')
+    ax = fig.add_subplot(gs[:, 0])  # graph takes the full left column
+    rax = fig.add_subplot(gs[0, 1])  # checkboxes: top-right
+    box_ax = fig.add_subplot(gs[1, 1])  # info box: bottom-right
+    box_ax.axis('off')  # no ticks/frame, just a text area
+
+    lines = {}
+    annotations = {}
+    labels = []
 
     # --- LINE 1: NET CHANGE ---
     total_change = net_change.sum()
     label_change = f"Net Change: {total_change:,.2f}$".replace(",", " ")
-    ax.plot(x, net_change, marker='o', markersize=4, color='red', linewidth=1.5,
-            linestyle=':', label=label_change)
+    line_change = ax.plot(x, net_change, marker='o', markersize=4, color='red', linewidth=1.5,
+                          linestyle=':', label=label_change)
+    lines["Net Change"] = line_change[0]
+    labels.append(label_change)
 
     for xi, yi in zip(x, net_change):
         if yi != 0:
-            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                        (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='red')
+            annotations["Net Change"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                                    (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                                    ha='center', fontsize=8, weight='bold', color='red')
 
     # --- LINE 2: INCOMING TRANSFERS ---
     total_incoming = incoming_transfer.sum()
     label_incoming = f"Incoming Transfers: {total_incoming:,.2f}$".replace(",", " ")
-    ax.plot(x, incoming_transfer, marker='s', markersize=4, color='cyan', linewidth=1.5,
-            linestyle=':', label=label_incoming)
+    line_incoming = ax.plot(x, incoming_transfer, marker='s', markersize=4, color='cyan', linewidth=1.5,
+                            linestyle=':', label=label_incoming)
+    lines["Incoming Transfers"] = line_incoming[0]
+    labels.append(label_incoming)
 
     for xi, yi in zip(x, incoming_transfer):
         if yi != 0:
-            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                        (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='cyan')
+            annotations["Incoming Transfers"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                                            (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                                            ha='center', fontsize=8, weight='bold', color='cyan')
 
     # --- LINE 3: OUTGOING TRANSFERS ---
     total_outgoing = outgoing_transfer.sum()
     label_outgoing = f"Outgoing Transfers: {total_outgoing:,.2f}$".replace(",", " ")
-    ax.plot(x, outgoing_transfer, marker='s', markersize=4, color='blue', linewidth=1.5,
-            linestyle=':', label=label_outgoing)
+    line_outgoing = ax.plot(x, outgoing_transfer, marker='s', markersize=4, color='blue', linewidth=1.5,
+                            linestyle=':', label=label_outgoing)
+    lines["Outgoing Transfers"] = line_outgoing[0]
+    labels.append(label_outgoing)
 
     for xi, yi in zip(x, outgoing_transfer):
         if yi != 0:
-            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                        (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='blue')
+            annotations["Outgoing Transfers"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                                            (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                                            ha='center', fontsize=8, weight='bold', color='blue')
 
     # --- LINE 4: INCOME RECEIVED ---
     total_income = income.sum()
     label_income = f"Income received: {total_income:,.2f}$".replace(",", " ")
-    ax.plot(x, income, marker='s', markersize=4, color='green', linewidth=1.5,
-            linestyle=':', label=label_income)
+    line_income = ax.plot(x, income, marker='s', markersize=4, color='green', linewidth=1.5,
+                          linestyle=':', label=label_income)
+    lines["Income"] = line_income[0]
+    labels.append(label_income)
 
     for xi, yi in zip(x, income):
         if yi != 0:
-            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                        (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='green')
+            annotations["Income"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                                (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                                ha='center', fontsize=8, weight='bold', color='green')
 
     # --- LINE 5: EXPENSES ---
     total_expenses = expenses.sum()
     label_expenses = f"Expenses: {total_expenses:,.2f}$".replace(",", " ")
-    ax.plot(x, expenses, marker='s', markersize=4, color='magenta', linewidth=1.5,
-            linestyle=':', label=label_expenses)
+    line_expenses = ax.plot(x, expenses, marker='s', markersize=4, color='magenta', linewidth=1.5,
+                            linestyle=':', label=label_expenses)
+    lines["Expenses"] = line_expenses[0]
+    labels.append(label_expenses)
 
     for xi, yi in zip(x, expenses):
         if yi != 0:
-            ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                        (xi, yi), textcoords="offset points", xytext=(0, 8),
-                        ha='center', fontsize=8, weight='bold', color='magenta')
+            annotations["Expenses"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                                  (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                                  ha='center', fontsize=8, weight='bold', color='magenta')
+
+    check = CheckButtons(
+        rax,
+        list(lines.keys()),
+        [True, True, True, True, True],
+        label_props={'fontsize': [10] * 5, 'color': ['red', 'cyan', 'blue', 'green', 'magenta']},
+        # Text size and colors
+        frame_props={'edgecolor': 'gray', 's': 100},  # checkbox frame (size 's', edge color)
+        check_props={'facecolor': ['red', 'cyan', 'blue', 'green', 'magenta']},  # checkmark color per item
+    )
+
+    def toggle_line(label):
+        line = lines[label]
+        line.set_visible(not line.get_visible())
+        fig.canvas.draw_idle()
+
+    check.on_clicked(toggle_line)
 
     # Delimit time period with separation lines
     for i in range(len(x) - 1):
@@ -522,16 +538,16 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
     ax.set_xticklabels(xticks)
     ax.tick_params(axis='x', which='both', length=0, pad=10)
 
-    plt.xlabel("Time Period", fontsize=12, labelpad=10)
-    plt.ylabel("CAD$", fontsize=12)
+    ax.set_xlabel("Time Period", fontsize=12, labelpad=10)
+    ax.set_ylabel("CAD$", fontsize=12)
 
     plt.margins(y=0.2)
-    plt.legend(loc="lower right")
+
+    box_ax.legend(handles=list(lines.values()), loc='center')
 
     start_period = period_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = period_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    plt.title(f"Chequing account transactions\n"
-              f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
-
+    ax.set_title(f"Checking account transactions\n"
+                 f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()

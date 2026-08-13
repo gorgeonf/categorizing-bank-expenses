@@ -17,6 +17,8 @@ from visualise.generate_graphs import (generate_transaction_types_bar_graph_per_
 def get_categorise_statements(start_date: str, end_date: str, bank_statement_path: Path):
     start_period = parse_date(start_date)
     end_period = parse_date(end_date)
+    if end_period < start_period:
+        raise ValueError("End date must be after start date.")
     bank_statements = filter_by_date_range(start_period, end_period, read_bank_statements(bank_statement_path))
 
     cleaned_statements = clean_all_descriptions(bank_statements)
@@ -155,7 +157,7 @@ if __name__ == "__main__":
     balance_path = script_dir / "data" / "RBC_Balance.csv"
 
     start_date = "01/01/2026"
-    end_date = "01/09/2026"
+    end_date = "31/12/2026"
 
     generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path, balance_path)
 
