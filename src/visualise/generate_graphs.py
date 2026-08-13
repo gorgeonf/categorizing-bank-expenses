@@ -379,9 +379,13 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
     plt.show()
 
 
-def generate_line_graph_actual_balance_change_per_period(period_statements, balance_df):
+def generate_line_graph_actual_balance_change_per_period(period_statements):
     """
-        actual_change = end_balance - start_balance
+    Interactive line chart comparing Income, Transfers from Savings, Expenses,
+    Savings/Investments, and Net Change across periods, with toggleable lines
+    via checkboxes.
+
+    :param period_statements: list of DataFrames, one per period (e.g. from slice_by_period).
     """
     transfers_from_savings = []
     savings_investments = []
@@ -421,8 +425,8 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
         savings_investments_sum = statement.loc[savings_investments_mask, 'CAD$'].sum()
         savings_investments.append(savings_investments_sum)
 
-        # Net change: sum of all the above
-        net_change.append(transfers_from_savings_sum + savings_investments_sum + income_sum + expenses_sum)
+        # Net change: sum of all the above except savings and investments
+        net_change.append(transfers_from_savings_sum + income_sum + expenses_sum)
 
     # Convert to a numpy array for consistent array operations
     net_change = np.array(net_change)
@@ -460,10 +464,10 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
                                                 (xi, yi), textcoords="offset points", xytext=(0, 8),
                                                 ha='center', fontsize=8, weight='bold', color='green')
 
-    # --- LINE 2: TRANSFERS FROM SAVINGS---
+    # --- LINE 2: TRANSFERS FROM SAVINGS  ---
     total_transfers_from_savings = transfers_from_savings.sum()
     label_transfers_from_savings = f"TRANSFERS FROM SAVINGS: {total_transfers_from_savings:,.2f}$".replace(",", " ")
-    line_transfers_from_savings = ax.plot(x, transfers_from_savings, marker='s', markersize=4, color='cyan',
+    line_transfers_from_savings = ax.plot(x, transfers_from_savings, marker='s', markersize=4, color='steelblue',
                                           linewidth=1.5,
                                           linestyle=':', label=label_transfers_from_savings)
     lines["TRANSFERS FROM SAVINGS"] = line_transfers_from_savings[0]
@@ -473,7 +477,7 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
         if yi != 0:
             annotations["TRANSFERS FROM SAVINGS"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
                                                                 (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                                ha='center', fontsize=8, weight='bold', color='cyan')
+                                                                ha='center', fontsize=8, weight='bold', color='steelblue')
 
     # --- LINE 3: EXPENSES ---
     total_expenses = expenses.sum()
@@ -521,10 +525,10 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, bala
         rax,
         list(lines.keys()),
         [True, True, True, True, True],
-        label_props={'fontsize': [10] * 5, 'color': ['green', 'cyan', 'magenta', 'blue', 'red']},
+        label_props={'fontsize': [10] * 5, 'color': ['green', 'steelblue', 'magenta', 'blue', 'red']},
         # Text size and colors
         frame_props={'edgecolor': 'gray', 's': 100},  # checkbox frame (size 's', edge color)
-        check_props={'facecolor': ['green', 'cyan', 'magenta', 'blue', 'red']},  # checkmark color per item
+        check_props={'facecolor': ['green', 'steelblue', 'magenta', 'blue', 'red']},  # checkmark color per item
     )
 
     def toggle_line(label):

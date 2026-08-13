@@ -25,12 +25,10 @@ def get_categorise_statements(start_date: str, end_date: str, bank_statement_pat
     return rename_description(cleaned_statements)
 
 
-"""
-Gets the list of sub categories for the category INCOME
-"""
-
-
 def generate_income_sub_categories(sliced_statements: list) -> list:
+    """
+    Gets the list of sub categories for the category INCOME
+    """
     income_subs = set()
     for df in sliced_statements:
         sub_mask = df['Category'] == "INCOME"
@@ -38,12 +36,10 @@ def generate_income_sub_categories(sliced_statements: list) -> list:
     return sorted(income_subs)
 
 
-"""
-Gets the list of categories in Expenses 
-"""
-
-
 def generate_expenses_categories(sliced_statements: list) -> list:
+    """
+    Gets the list of categories in Expenses
+    """
     expenses_categories = set()
     for df in sliced_statements:
         sub_mask = (df["CAD$"] < 0) & (df["Category"].isin(ALL_CATEGORIES.keys()))
@@ -144,11 +140,9 @@ def generate_sub_category_line_graph_per_period_helper(start_date: str, end_date
     generate_sub_category_line_graph_per_period(period_statements, sub_category)
 
 
-def generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path,
-                                                                balance_path):
-    balance_df = read_balance_document(balance_path)
+def generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path):
     period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
-    generate_line_graph_actual_balance_change_per_period(period_statements, balance_df)
+    generate_line_graph_actual_balance_change_per_period(period_statements)
 
 
 if __name__ == "__main__":
@@ -159,7 +153,7 @@ if __name__ == "__main__":
     start_date = "01/01/2026"
     end_date = "31/12/2026"
 
-    generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path, balance_path)
+    generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path)
 
     # generate_balance_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
     # generate_transaction_types_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
