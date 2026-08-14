@@ -140,9 +140,9 @@ def generate_sub_category_line_graph_per_period_helper(start_date: str, end_date
     generate_sub_category_line_graph_per_period(period_statements, sub_category)
 
 
-def generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path):
+def generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path, excluded):
     period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
-    generate_line_graph_actual_balance_change_per_period(period_statements)
+    generate_line_graph_actual_balance_change_per_period(period_statements, excluded)
 
 
 if __name__ == "__main__":
@@ -153,7 +153,8 @@ if __name__ == "__main__":
     start_date = "01/01/2026"
     end_date = "31/12/2026"
 
-    generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path)
+    excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
+    generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path, excluded)
 
     # generate_balance_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
     # generate_transaction_types_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)

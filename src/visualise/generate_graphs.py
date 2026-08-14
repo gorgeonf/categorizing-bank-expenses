@@ -379,7 +379,7 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
     plt.show()
 
 
-def generate_line_graph_actual_balance_change_per_period(period_statements):
+def generate_line_graph_actual_balance_change_per_period(period_statements, excluded=None):
     """
     Interactive line chart comparing Income, Transfers from Savings, Expenses,
     Savings/Investments, and Net Change across periods, with toggleable lines
@@ -387,12 +387,13 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
 
     :param period_statements: list of DataFrames, one per period (e.g. from slice_by_period).
     """
+    if excluded is None:
+        excluded = set()
     transfers_from_savings = []
     savings_investments = []
     income = []
     expenses = []
     net_change = []
-
     essential_expenses = []
 
     xticks = []
@@ -421,7 +422,6 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
         expenses.append(expenses_sum)
 
         # Essential expenses = Expenses - {set of categories to exclude}
-        excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
         essential_expenses_mask = (
                 (statement['CAD$'] < 0) & (
                 statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") & (
@@ -441,15 +441,15 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
         # Net change: sum of all the above except savings and investments
         net_change.append(transfers_from_savings_sum + income_sum + expenses_sum)
 
-    # Convert to a numpy array for consistent array operations
-    net_change = np.array(net_change)
-    x = np.arange(len(net_change))
+    account_flows = [("INCOME", income, 'blue', 's'),
+                     ("TRANSFERS FROM SAVINGS", transfers_from_savings, 'steelblue', 's'),
+                     ("EXPENSES", expenses, 'magenta', 's'),
+                     ("ESSENTIAL EXPENSES", essential_expenses, 'purple', 's'),
+                     ("SAVINGS AND INVESTMENTS", savings_investments, 'green', 's'),
+                     ("NET CHANGE", net_change, 'red', 'o'),
+                     ]
 
-    transfers_from_savings = np.array(transfers_from_savings)
-    savings_investments = np.array(savings_investments)
-    income = np.array(income)
-    expenses = np.array(expenses)
-    essential_expenses = np.array(essential_expenses)
+    x_coord = np.arange(len(account_flows[0][1]))
 
     # Initialize the plot
     fig = plt.figure(figsize=(14, 7))
@@ -460,117 +460,56 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
     box_ax = fig.add_subplot(gs[1, 1])  # info box: bottom-right
     box_ax.axis('off')  # no ticks/frame, just a text area
 
+    # Maps each flow's name (e.g. "INCOME") to its Line2D object,
+    # so toggle_line can look up and show/hide the correct line when its checkbox is clicked.
     lines = {}
+
+    # Maps each flow's name to its annotation (the $ value text shown at non-zero points).
+    # Not every flow has one — a flow with all-zero values across every period never gets an entry here,
+    # so toggle_line checks membership before accessing it.
     annotations = {}
-    labels = []
 
-    # --- LINE 1: INCOME RECEIVED ---
-    total_income = income.sum()
-    label_income = f"INCOME: {total_income:,.2f}$".replace(",", " ")
-    line_income = ax.plot(x, income, marker='s', markersize=4, color='green', linewidth=1.5,
-                          linestyle=':', label=label_income)
-    lines["INCOME"] = line_income[0]
-    labels.append(label_income)
+    for flow in account_flows:
+        # Convert to a numpy array for consistent array operations
+        flow_array = np.array(flow[1])
 
-    for xi, yi in zip(x, income):
-        if yi != 0:
-            annotations["INCOME"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                                                (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                ha='center', fontsize=8, weight='bold', color='green')
+        total_flow = flow_array.sum()
+        label_flow = f"{flow[0]}: {total_flow:,.2f}$".replace(",", " ")
+        line_flow = ax.plot(x_coord, flow_array, marker=flow[3], markersize=4, color=flow[2], linewidth=1.5,
+                            linestyle=':', label=label_flow)
+        lines[flow[0]] = line_flow[0]
 
-    # --- LINE 2: TRANSFERS FROM SAVINGS  ---
-    total_transfers_from_savings = transfers_from_savings.sum()
-    label_transfers_from_savings = f"TRANSFERS FROM SAVINGS: {total_transfers_from_savings:,.2f}$".replace(",", " ")
-    line_transfers_from_savings = ax.plot(x, transfers_from_savings, marker='s', markersize=4, color='steelblue',
-                                          linewidth=1.5,
-                                          linestyle=':', label=label_transfers_from_savings)
-    lines["TRANSFERS FROM SAVINGS"] = line_transfers_from_savings[0]
-    labels.append(label_transfers_from_savings)
+        annotations[flow[0]] = []
+        for xi, yi in zip(x_coord, flow_array):
+            if yi != 0:
+                ann = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                  (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                  ha='center', fontsize=8, weight='bold', color=flow[2])
+                annotations[flow[0]].append(ann)
 
-    for xi, yi in zip(x, transfers_from_savings):
-        if yi != 0:
-            annotations["TRANSFERS FROM SAVINGS"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                                                                (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                                ha='center', fontsize=8, weight='bold',
-                                                                color='steelblue')
-
-    # --- LINE 3: EXPENSES ---
-    total_expenses = expenses.sum()
-    label_expenses = f"EXPENSES: {total_expenses:,.2f}$".replace(",", " ")
-    line_expenses = ax.plot(x, expenses, marker='s', markersize=4, color='magenta', linewidth=1.5,
-                            linestyle=':', label=label_expenses)
-    lines["EXPENSES"] = line_expenses[0]
-    labels.append(label_expenses)
-
-    for xi, yi in zip(x, expenses):
-        if yi != 0:
-            annotations["EXPENSES"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                                                  (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                  ha='center', fontsize=8, weight='bold', color='magenta')
-
-    # --- LINE 4: SAVINGS AND INVESTMENTS ---
-    total_savings_investments = savings_investments.sum()
-    label_savings_investments = f"SAVINGS_AND_INVESTMENTS: {total_savings_investments:,.2f}$".replace(",", " ")
-    line_savings_investments = ax.plot(x, savings_investments, marker='s', markersize=4, color='blue', linewidth=1.5,
-                                       linestyle=':', label=label_savings_investments)
-    lines["SAVINGS_AND_INVESTMENTS"] = line_savings_investments[0]
-    labels.append(label_savings_investments)
-
-    for xi, yi in zip(x, savings_investments):
-        if yi != 0:
-            annotations["SAVINGS_AND_INVESTMENTS"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                                                                 (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                                 ha='center', fontsize=8, weight='bold', color='blue')
-
-    # --- LINE 5: NET CHANGE ---
-    total_change = net_change.sum()
-    label_change = f"NET CHANGE: {total_change:,.2f}$".replace(",", " ")
-    line_change = ax.plot(x, net_change, marker='o', markersize=4, color='red', linewidth=1.5,
-                          linestyle=':', label=label_change)
-    lines["NET CHANGE"] = line_change[0]
-    labels.append(label_change)
-
-    for xi, yi in zip(x, net_change):
-        if yi != 0:
-            annotations["NET CHANGE"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                                                    (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                    ha='center', fontsize=8, weight='bold', color='red')
-
-    # --- LINE 3-bis: ESSENTIAL EXPENSES ---
-    total_essential_expenses = essential_expenses.sum()
-    label_essential_expenses = f"EXPENSES: {total_essential_expenses:,.2f}$".replace(",", " ")
-    line_essential_expenses = ax.plot(x, essential_expenses, marker='s', markersize=4, color='purple', linewidth=1.5,
-                                      linestyle=':', label=label_essential_expenses)
-    lines["ESSENTIAL EXPENSES"] = line_essential_expenses[0]
-    labels.append(label_essential_expenses)
-
-    for xi, yi in zip(x, essential_expenses):
-        if yi != 0:
-            annotations["EXPENSES"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
-                                                  (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                  ha='center', fontsize=8, weight='bold', color='purple')
+    colors = [flow[2] for flow in account_flows]
 
     check = CheckButtons(
         rax,
         list(lines.keys()),
-        [True, True, True, True, True, True],
-        label_props={'fontsize': [10] * 6, 'color': ['green', 'steelblue', 'magenta', 'blue', 'red', 'purple']},
-        # Text size and colors
+        [True for _ in account_flows],
+        label_props={'fontsize': [10] * len(account_flows), 'color': colors},  # Text size and colors
         frame_props={'edgecolor': 'gray', 's': 100},  # checkbox frame (size 's', edge color)
-        check_props={'facecolor': ['green', 'steelblue', 'magenta', 'blue', 'red', 'purple']},
-        # checkmark color per item
+        check_props={'facecolor': colors},  # checkmark color per item
     )
 
     def toggle_line(label):
         line = lines[label]
         line.set_visible(not line.get_visible())
+        for ann in annotations.get(label, []):
+            ann.set_visible(not ann.get_visible())
         fig.canvas.draw_idle()
 
     check.on_clicked(toggle_line)
 
     # Delimit time period with separation lines
-    for i in range(len(x) - 1):
-        midpoint = (x[i] + x[i + 1]) / 2
+    for i in range(len(x_coord) - 1):
+        midpoint = (x_coord[i] + x_coord[i + 1]) / 2
         ax.axvline(
             x=midpoint,
             color='grey',  # Strong color to make boundaries obvious
@@ -583,7 +522,7 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
     ax.axhline(0, color='black', linestyle='-', linewidth=0.8, alpha=0.3)
     ax.grid(axis='y', linestyle=':', linewidth=1, color='gray', alpha=0.4)
 
-    ax.set_xticks(x)
+    ax.set_xticks(x_coord)
     ax.set_xticklabels(xticks)
     ax.tick_params(axis='x', which='both', length=0, pad=10)
 
