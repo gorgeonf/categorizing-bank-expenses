@@ -393,6 +393,8 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
     expenses = []
     net_change = []
 
+    essential_expenses = []
+
     xticks = []
 
     for statement in period_statements:
@@ -413,15 +415,26 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
         # Expenses = negative CAD$ expect "ONLINE TRANSFER TO DEPOSIT ACCOUNT" which go into Savings
         # Need to take into account: negative CAD$ & "ONLINE BANKING TRANSFER" which are reimbursement of the Credit Card
         expenses_mask = (statement['CAD$'] < 0) & (
-                    statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") & (
+                statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") & (
                                 statement['Category'] != "INVESTMENTS")
         expenses_sum = statement.loc[expenses_mask, 'CAD$'].sum()
         expenses.append(expenses_sum)
 
+        # Essential expenses = Expenses - {set of categories to exclude}
+        excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
+        essential_expenses_mask = (
+                (statement['CAD$'] < 0) & (
+                statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") & (
+                        statement['Category'] != "INVESTMENTS")
+                & (~statement['Category'].isin(excluded))
+        )
+        essential_expenses_sum = statement.loc[essential_expenses_mask, 'CAD$'].sum()
+        essential_expenses.append(essential_expenses_sum)
+
         # Savings / Investments
         savings_investments_mask = (
-                    ((statement['CAD$'] < 0) & (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
-                    ((statement['CAD$'] < 0) & (statement['Category'] == "INVESTMENTS")))
+                ((statement['CAD$'] < 0) & (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
+                ((statement['CAD$'] < 0) & (statement['Category'] == "INVESTMENTS")))
         savings_investments_sum = statement.loc[savings_investments_mask, 'CAD$'].sum()
         savings_investments.append(savings_investments_sum)
 
@@ -436,6 +449,7 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
     savings_investments = np.array(savings_investments)
     income = np.array(income)
     expenses = np.array(expenses)
+    essential_expenses = np.array(essential_expenses)
 
     # Initialize the plot
     fig = plt.figure(figsize=(14, 7))
@@ -477,7 +491,8 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
         if yi != 0:
             annotations["TRANSFERS FROM SAVINGS"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
                                                                 (xi, yi), textcoords="offset points", xytext=(0, 8),
-                                                                ha='center', fontsize=8, weight='bold', color='steelblue')
+                                                                ha='center', fontsize=8, weight='bold',
+                                                                color='steelblue')
 
     # --- LINE 3: EXPENSES ---
     total_expenses = expenses.sum()
@@ -521,14 +536,29 @@ def generate_line_graph_actual_balance_change_per_period(period_statements):
                                                     (xi, yi), textcoords="offset points", xytext=(0, 8),
                                                     ha='center', fontsize=8, weight='bold', color='red')
 
+    # --- LINE 3-bis: ESSENTIAL EXPENSES ---
+    total_essential_expenses = essential_expenses.sum()
+    label_essential_expenses = f"EXPENSES: {total_essential_expenses:,.2f}$".replace(",", " ")
+    line_essential_expenses = ax.plot(x, essential_expenses, marker='s', markersize=4, color='purple', linewidth=1.5,
+                                      linestyle=':', label=label_essential_expenses)
+    lines["ESSENTIAL EXPENSES"] = line_essential_expenses[0]
+    labels.append(label_essential_expenses)
+
+    for xi, yi in zip(x, essential_expenses):
+        if yi != 0:
+            annotations["EXPENSES"] = ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                                                  (xi, yi), textcoords="offset points", xytext=(0, 8),
+                                                  ha='center', fontsize=8, weight='bold', color='purple')
+
     check = CheckButtons(
         rax,
         list(lines.keys()),
-        [True, True, True, True, True],
-        label_props={'fontsize': [10] * 5, 'color': ['green', 'steelblue', 'magenta', 'blue', 'red']},
+        [True, True, True, True, True, True],
+        label_props={'fontsize': [10] * 6, 'color': ['green', 'steelblue', 'magenta', 'blue', 'red', 'purple']},
         # Text size and colors
         frame_props={'edgecolor': 'gray', 's': 100},  # checkbox frame (size 's', edge color)
-        check_props={'facecolor': ['green', 'steelblue', 'magenta', 'blue', 'red']},  # checkmark color per item
+        check_props={'facecolor': ['green', 'steelblue', 'magenta', 'blue', 'red', 'purple']},
+        # checkmark color per item
     )
 
     def toggle_line(label):

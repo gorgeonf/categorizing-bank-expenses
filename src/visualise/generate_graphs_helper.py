@@ -169,7 +169,6 @@ if __name__ == "__main__":
 
     # sliced_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
     # expenses = generate_expenses_categories(sliced_statements)
-    # exclude = {"ALCOHOL", "COFFEES", "RESTAURANTS", "HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER",
-    #            "IMMIGRATION_AUSTRALIA", "COSTCO"}
+    # exclude = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
     # vital_expenses = list(set(expenses) - exclude)
     # generate_grouped_bar_graph_per_period_helper(start_date, end_date, bank_statement_path, vital_expenses, "Category")
