@@ -3,15 +3,16 @@ from pathlib import Path
 from categorise.group_in_categories import rename_description, ALL_CATEGORIES
 from data.clean_description import clean_all_descriptions
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
-from data.read_data import read_bank_statements, read_balance_document
-from visualise.data_shaping import build_transaction_types_dicts
+from data.read_data import read_bank_statements
+from visualise.data_shaping import build_transaction_types_dicts, get_account_flows, AccountFlow
 from visualise.generate_graphs import (generate_transaction_types_bar_graph_per_period,
                                        generate_balance_bar_graph_per_period,
                                        generate_balance_graph,
                                        generate_transaction_types_bar_graph,
                                        generate_sub_category_line_graph_per_period,
                                        generate_grouped_bar_graph_per_period,
-                                       generate_line_graph_actual_balance_change_per_period)
+                                       generate_line_graph_account_flows_per_period,
+                                       generate_line_graph_account_flows_categories_per_period)
 
 
 def get_categorise_statements(start_date: str, end_date: str, bank_statement_path: Path):
@@ -140,9 +141,17 @@ def generate_sub_category_line_graph_per_period_helper(start_date: str, end_date
     generate_sub_category_line_graph_per_period(period_statements, sub_category)
 
 
-def generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path, excluded):
+def generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_path, expenses_excluded):
     period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
-    generate_line_graph_actual_balance_change_per_period(period_statements, excluded)
+    account_flows = get_account_flows(period_statements,expenses_excluded)
+    generate_line_graph_account_flows_per_period(period_statements, account_flows)
+
+
+def generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
+                                                                   account_flow_type:AccountFlow, expenses_excluded):
+    period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
+    account_flows = get_account_flows(period_statements, expenses_excluded)
+    generate_line_graph_account_flows_categories_per_period(period_statements, account_flows, account_flow_type)
 
 
 if __name__ == "__main__":
@@ -151,10 +160,13 @@ if __name__ == "__main__":
     balance_path = script_dir / "data" / "RBC_Balance.csv"
 
     start_date = "01/01/2026"
-    end_date = "31/12/2026"
+    end_date = "30/09/2026"
 
-    excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
-    generate_line_graph_actual_balance_change_per_period_helper(start_date, end_date, bank_statement_path, excluded)
+    expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
+    generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_path, expenses_excluded)
+
+    # generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
+    #                                                                AccountFlow.INCOME, expenses_excluded)
 
     # generate_balance_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
     # generate_transaction_types_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
@@ -162,7 +174,7 @@ if __name__ == "__main__":
     # generate_balance_pie_graph_helper(start_date, end_date, bank_statement_path)
     # generate_balance_bar_graph_helper(start_date, end_date, bank_statement_path)
 
-    # generate_sub_category_line_graph_per_period_helper("01/01/2026", end_date, bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS"])
+    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS","HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA",])
 
     # sliced_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
     # income = generate_income_sub_categories(sliced_statements)
@@ -172,4 +184,4 @@ if __name__ == "__main__":
     # expenses = generate_expenses_categories(sliced_statements)
     # exclude = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
     # vital_expenses = list(set(expenses) - exclude)
-    # generate_grouped_bar_graph_per_period_helper(start_date, end_date, bank_statement_path, vital_expenses, "Category")
+    # generate_grouped_bar_graph_per_period_helper(start_date, end_date, bank_statement_path, expenses, "Category")

@@ -1,8 +1,19 @@
+from enum import Enum
+
 import pandas as pd
 from pandas import DataFrame, Timestamp
 
 from categorise.group_in_categories import ALL_CATEGORIES
 from data.date_utils import parse_date
+
+
+class AccountFlow(Enum):
+    INCOME = "INCOME"
+    TRANSFERS_FROM_SAVINGS = "TRANSFERS FROM SAVINGS"
+    EXPENSES = "EXPENSES"
+    ESSENTIAL_EXPENSES = "ESSENTIAL EXPENSES"
+    SAVINGS_AND_INVESTMENTS = "SAVINGS AND INVESTMENTS"
+    NET_CHANGE = "NET CHANGE"
 
 
 def sum_categories(statement: DataFrame, categories: set) -> dict:
@@ -55,3 +66,86 @@ def get_balance_start_end_date_from_timestamps(start_date: Timestamp, end_date: 
     start_balance = matched.iloc[0]['Balance']
     end_balance = matched.iloc[1]['Balance']
     return start_balance, end_balance
+
+
+def get_account_flows_df_masks(statement, expenses_excluded=None):
+    if expenses_excluded is None:
+        expenses_excluded = set()
+
+    income_mask = (((statement['CAD$'] > 0) & (statement['Sub Category'] != "ONLINE BANKING TRANSFER")) &
+                   ((statement['CAD$'] > 0) & (statement['Category'] != "INVESTMENTS")))
+
+    transfers_from_savings_mask = ((statement['CAD$'] > 0) &
+                                   (statement['Sub Category'] == "ONLINE BANKING TRANSFER"))
+
+    expenses_mask = ((statement['CAD$'] < 0) &
+                     (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
+                     (statement['Category'] != "INVESTMENTS"))
+
+    essential_expenses_mask = ((statement['CAD$'] < 0) &
+                               (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
+                               (statement['Category'] != "INVESTMENTS") &
+                               (~statement['Category'].isin(expenses_excluded)))
+
+    savings_investments_mask = (((statement['CAD$'] < 0) &
+                                 (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
+                                ((statement['CAD$'] < 0) & (statement['Category'] == "INVESTMENTS")))
+
+    return [income_mask, transfers_from_savings_mask, expenses_mask, essential_expenses_mask, savings_investments_mask]
+
+
+def get_account_flows(period_statements, expenses_excluded=None):
+    """
+    Returns a list of label, DataFrame, color and marker for the account flows:
+        income, transfers_from_savings, expenses, essential_expenses, savings_investments, net_change
+    """
+    if expenses_excluded is None:
+        expenses_excluded = set()
+    transfers_from_savings = []
+    savings_investments = []
+    income = []
+    expenses = []
+    net_change = []
+    essential_expenses = []
+
+    for statement in period_statements:
+        statement_masks = get_account_flows_df_masks(statement, expenses_excluded)
+
+        # Income = positive CAD$ except "ONLINE BANKING TRANSFER" which are money transferred from Savings,
+        #           and "INVESTMENTS" (Ex: withdrawal from RRSP overcontribution)
+        income_mask = statement_masks[0]
+        income_sum = statement.loc[income_mask, 'CAD$'].sum()
+        income.append(income_sum)
+
+        # Bank transfer coming from Savings
+        transfers_from_savings_mask = statement_masks[1]
+        transfers_from_savings_sum = statement.loc[transfers_from_savings_mask, 'CAD$'].sum()
+        transfers_from_savings.append(transfers_from_savings_sum)
+
+        # Expenses = negative CAD$ expect "ONLINE TRANSFER TO DEPOSIT ACCOUNT" which go into Savings
+        # Need to take into account: negative CAD$ & "ONLINE BANKING TRANSFER" which are reimbursement of the Credit Card
+        expenses_mask = statement_masks[2]
+        expenses_sum = statement.loc[expenses_mask, 'CAD$'].sum()
+        expenses.append(expenses_sum)
+
+        # Essential expenses = Expenses - {set of categories to exclude}
+        essential_expenses_mask = statement_masks[3]
+        essential_expenses_sum = statement.loc[essential_expenses_mask, 'CAD$'].sum()
+        essential_expenses.append(essential_expenses_sum)
+
+        # Savings / Investments
+        savings_investments_mask = statement_masks[4]
+        savings_investments_sum = statement.loc[savings_investments_mask, 'CAD$'].sum()
+        savings_investments.append(savings_investments_sum)
+
+        # Net change: sum of all the above except savings and investments
+        net_change.append(transfers_from_savings_sum + income_sum + expenses_sum)
+
+    return [
+        ("INCOME", income, 'blue', 's'),
+        ("TRANSFERS FROM SAVINGS", transfers_from_savings, 'steelblue', 's'),
+        ("EXPENSES", expenses, 'magenta', 's'),
+        ("ESSENTIAL EXPENSES", essential_expenses, 'purple', 's'),
+        ("SAVINGS AND INVESTMENTS", savings_investments, 'green', 's'),
+        ("NET CHANGE", net_change, 'red', 'o'),
+    ]

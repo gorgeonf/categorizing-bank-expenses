@@ -379,76 +379,17 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
     plt.show()
 
 
-def generate_line_graph_actual_balance_change_per_period(period_statements, excluded=None):
+def generate_line_graph_account_flows_per_period(period_statements, account_flows):
     """
     Interactive line chart comparing Income, Transfers from Savings, Expenses,
     Savings/Investments, and Net Change across periods, with toggleable lines
     via checkboxes.
 
     :param period_statements: list of DataFrames, one per period (e.g. from slice_by_period).
+    :param account_flows: list of label, DataFrame, color and marker for the account flows:
+        income, transfers_from_savings, expenses, essential_expenses, savings_investments, net_change
     """
-    if excluded is None:
-        excluded = set()
-    transfers_from_savings = []
-    savings_investments = []
-    income = []
-    expenses = []
-    net_change = []
-    essential_expenses = []
-
-    xticks = []
-
-    for statement in period_statements:
-        xticks.append(statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
-
-        # Income = positive CAD$ except "ONLINE BANKING TRANSFER" which are money transferred from Savings,
-        #           and "INVESTMENTS" (Ex: withdrawal from RRSP overcontribution)
-        income_mask = ((statement['CAD$'] > 0) & (statement['Sub Category'] != "ONLINE BANKING TRANSFER")) & (
-                (statement['CAD$'] > 0) & (statement['Category'] != "INVESTMENTS"))
-        income_sum = statement.loc[income_mask, 'CAD$'].sum()
-        income.append(income_sum)
-
-        # Bank transfer coming from Savings
-        transfers_from_savings_mask = (statement['CAD$'] > 0) & (statement['Sub Category'] == "ONLINE BANKING TRANSFER")
-        transfers_from_savings_sum = statement.loc[transfers_from_savings_mask, 'CAD$'].sum()
-        transfers_from_savings.append(transfers_from_savings_sum)
-
-        # Expenses = negative CAD$ expect "ONLINE TRANSFER TO DEPOSIT ACCOUNT" which go into Savings
-        # Need to take into account: negative CAD$ & "ONLINE BANKING TRANSFER" which are reimbursement of the Credit Card
-        expenses_mask = (statement['CAD$'] < 0) & (
-                statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") & (
-                                statement['Category'] != "INVESTMENTS")
-        expenses_sum = statement.loc[expenses_mask, 'CAD$'].sum()
-        expenses.append(expenses_sum)
-
-        # Essential expenses = Expenses - {set of categories to exclude}
-        essential_expenses_mask = (
-                (statement['CAD$'] < 0) & (
-                statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") & (
-                        statement['Category'] != "INVESTMENTS")
-                & (~statement['Category'].isin(excluded))
-        )
-        essential_expenses_sum = statement.loc[essential_expenses_mask, 'CAD$'].sum()
-        essential_expenses.append(essential_expenses_sum)
-
-        # Savings / Investments
-        savings_investments_mask = (
-                ((statement['CAD$'] < 0) & (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
-                ((statement['CAD$'] < 0) & (statement['Category'] == "INVESTMENTS")))
-        savings_investments_sum = statement.loc[savings_investments_mask, 'CAD$'].sum()
-        savings_investments.append(savings_investments_sum)
-
-        # Net change: sum of all the above except savings and investments
-        net_change.append(transfers_from_savings_sum + income_sum + expenses_sum)
-
-    account_flows = [("INCOME", income, 'blue', 's'),
-                     ("TRANSFERS FROM SAVINGS", transfers_from_savings, 'steelblue', 's'),
-                     ("EXPENSES", expenses, 'magenta', 's'),
-                     ("ESSENTIAL EXPENSES", essential_expenses, 'purple', 's'),
-                     ("SAVINGS AND INVESTMENTS", savings_investments, 'green', 's'),
-                     ("NET CHANGE", net_change, 'red', 'o'),
-                     ]
-
+    x_ticks = [statement.iloc[0]['Transaction Date'].strftime('%B - %Y').upper() for statement in period_statements]
     x_coord = np.arange(len(account_flows[0][1]))
 
     # Initialize the plot
@@ -523,7 +464,7 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, excl
     ax.grid(axis='y', linestyle=':', linewidth=1, color='gray', alpha=0.4)
 
     ax.set_xticks(x_coord)
-    ax.set_xticklabels(xticks)
+    ax.set_xticklabels(x_ticks)
     ax.tick_params(axis='x', which='both', length=0, pad=10)
 
     ax.set_xlabel("Time Period", fontsize=12, labelpad=10)
@@ -539,3 +480,7 @@ def generate_line_graph_actual_balance_change_per_period(period_statements, excl
                  f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()
+
+def generate_line_graph_account_flows_categories_per_period(period_statements, account_flows, account_flow_type):
+    print(type(account_flows))
+

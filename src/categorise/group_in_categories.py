@@ -32,7 +32,8 @@ VANCOUVER_COMMUNITY_CENTER = {"VANCOUVER PUBLI", "VANCOUVER PB RE"}
 
 ALCOHOL = {"BC LIQUOR", "MARQUIS WINE CE", }
 
-YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "ZENSURANCE.COM", "NANCY GIRARD", "CYNTHIA DOMINGUE", "BÉATRICE LAROUCHE"}
+YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "ZENSURANCE.COM", "NANCY GIRARD", "CYNTHIA DOMINGUE",
+                     "BÉATRICE LAROUCHE"}
 
 COFFEES = {"SQ *CHEZ NOUS B",
            "BLENZ ON DENMAN",
@@ -52,7 +53,8 @@ COFFEES = {"SQ *CHEZ NOUS B",
            "LS TOFINO SEA K",
            "SOLLY'S BAGELRY",
            "ORGANIC BITES C",
-           "VEGAIN"
+           "VEGAIN",
+           "SQ *TURF"
            }
 
 RESTAURANTS = {"HOUSE OF DOSAS",
@@ -72,7 +74,9 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "YAYU CAFE & RES",
                "OLYMPIA ON DENM",
                "BANGKOK BISTRO",
-               "SAINAM RESTAURA"
+               "SAINAM RESTAURA",
+               "DOSA & CURRY ON",
+               "UBER * EATS",
                }
 
 """
