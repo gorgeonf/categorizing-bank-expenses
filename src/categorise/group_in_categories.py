@@ -20,7 +20,7 @@ UTILITIES = {"PUBLIC MOBILE", "HYDRO", "OXIO", "INSURANCE AVIVA-HOME", "MONTHLY 
 
 INCOME = {"EI CANADA", "PAYROLL DEPOSIT", "SERVICE DE GARDE LES COPAINS", "MOBILE CHEQUE DEPOSIT", }
 
-CAR = {"PETRO-CANADA", "ICBC", "CHV", }
+CAR = {"PETRO-CANADA", "ICBC", "CHV", "ESSO" }
 
 TRANSPORT = {"COMPASS", "UBER CANADA/UBE", }
 
@@ -35,7 +35,9 @@ ALCOHOL = {"BC LIQUOR", "MARQUIS WINE CE", }
 YOGA_AND_COACHING = {"YOGACOACHING", "SYSTEME.IO", "ZENSURANCE.COM", "NANCY GIRARD", "CYNTHIA DOMINGUE",
                      "BÉATRICE LAROUCHE"}
 
-COFFEES = {"SQ *CHEZ NOUS B",
+COFFEES = {"49th PARALLEL",
+           "MATCHSTICK",
+           "SQ *CHEZ NOUS B",
            "BLENZ ON DENMAN",
            "SQ *ANALOG COFF",
            "STARBUCKS COFFE",
@@ -54,7 +56,9 @@ COFFEES = {"SQ *CHEZ NOUS B",
            "SOLLY'S BAGELRY",
            "ORGANIC BITES C",
            "VEGAIN",
-           "SQ *TURF"
+           "SQ *TURF",
+           "GUFFO CAFE",
+           "TREES ORGANIC"
            }
 
 RESTAURANTS = {"HOUSE OF DOSAS",
@@ -77,6 +81,8 @@ RESTAURANTS = {"HOUSE OF DOSAS",
                "SAINAM RESTAURA",
                "DOSA & CURRY ON",
                "UBER * EATS",
+               "BIRYANI LOUNGE",
+               "MIDDLE BEACH LO"
                }
 
 """
@@ -103,6 +109,7 @@ GROCERIES = {"WHOLE FOODS MAR",
              "QUALITY FOODS",
              "BERRYMOBILE",
              "TOFINO CO-OP",
+             "IGA",
              }
 
 COSTCO = {"COSTCO WHOLESAL", "COSTCO CA"}
@@ -116,6 +123,7 @@ HOUSE_CLOTHING = {"THE SOAP DISPEN",
                   "MARSHALLS",
                   "STEVE WEST END RECYCLING",
                   "NICOLA DRYCLEAN",
+                  "THE RIGHT SHOE",
                   }
 
 HEALTH = {"SHOPPERS DRUG M",
@@ -131,7 +139,9 @@ HEALTH = {"SHOPPERS DRUG M",
           "TOETOSOUL",
           "MSK HEALTH",
           "TUNE UP",
-          "SANDRA BOUCHARD"
+          "SANDRA BOUCHARD",
+          "GLOW_THERAPY",
+          "PARIS ORTHOTICS"
           }
 
 TRAVELS = {"AIRBNB", "BEST WESTERN", "BCF", "PACIFIC RIM", "HOTEL AT BOOKIN"}
@@ -157,7 +167,11 @@ KEYWORD_SUB_CATEGORY_OVERRIDE = {
     "MOBILE CHEQUE DEPOSIT": "CHEQUE DEPOSIT",
     "MISC PAYMENT SUN LIFE": "SUN LIFE REIMBURSEMENT",
     "ATM WITHDRAWAL": "ATM WITHDRAWAL",
-    "BÉATRICE LAROUCHE": "AURELIE YOGACOACHING"
+    "BÉATRICE LAROUCHE": "AURELIE YOGACOACHING",
+    "AIRBNB": "AIRBNB",
+    "UBER CANADA/UBE": "UBER CANADA/UBE",
+    "ZENSURANCE.COM": "ZENSURANCE.COM",
+    "GLOW_THERAPY": "GLOW_THERAPY"
 }
 
 

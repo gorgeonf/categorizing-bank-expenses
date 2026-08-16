@@ -394,7 +394,8 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
 
     # Initialize the plot
     fig = plt.figure(figsize=(14, 7))
-    gs = fig.add_gridspec(2, 2, width_ratios=[4, 1], height_ratios=[1, 1])
+    n = len(account_flows)
+    gs = fig.add_gridspec(2, 2, width_ratios=[3, 2], height_ratios=[n, 1])
 
     ax = fig.add_subplot(gs[:, 0])  # graph takes the full left column
     rax = fig.add_subplot(gs[0, 1])  # checkboxes: top-right
@@ -410,6 +411,7 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
     # so toggle_line checks membership before accessing it.
     annotations = {}
 
+    flow_totals = []
     for flow in account_flows:
         # Convert to a numpy array for consistent array operations
         flow_array = np.array(flow[1])
@@ -417,8 +419,9 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
         total_flow = flow_array.sum()
         label_flow = f"{flow[0]}: {total_flow:,.2f}$".replace(",", " ")
         line_flow = ax.plot(x_coord, flow_array, marker=flow[3], markersize=4, color=flow[2], linewidth=1.5,
-                            linestyle=':', label=label_flow)
+                            ls='solid', label=label_flow)
         lines[flow[0]] = line_flow[0]
+        flow_totals.append((flow[0], line_flow[0], total_flow))
 
         annotations[flow[0]] = []
         for xi, yi in zip(x_coord, flow_array):
@@ -472,7 +475,12 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
 
     plt.margins(y=0.2)
 
-    box_ax.legend(handles=list(lines.values()), loc='center')
+    # To sort the legend by the highest CAD$
+    flow_totals_sorted = sorted(flow_totals, key=lambda x: x[2], reverse=False)
+    sorted_handles = [item[1] for item in flow_totals_sorted]
+    # Display the legend in a second, standalone window
+    legend_fig = plt.figure(figsize=(4, len(account_flows) * 0.3))
+    legend_fig.legend(handles=sorted_handles, loc='center')
 
     start_period = period_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = period_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
@@ -481,6 +489,20 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
     plt.tight_layout()
     plt.show()
 
-def generate_line_graph_account_flows_categories_per_period(period_statements, account_flows, account_flow_type):
-    print(type(account_flows))
 
+def generate_line_graph_account_flows_categories_per_period(period_statements):
+    set_categories = set()
+    for df in period_statements:
+        tmp_set = set(list(df['Category']))
+        set_categories = set_categories.union(tmp_set)
+
+    account_flows = []
+    import random
+    for category in set_categories:
+        df_totals = []
+        for df in period_statements:
+            df_totals.append(df.loc[df['Category'] == category, 'CAD$'].sum())
+        color = (random.random(), random.random(), random.random())
+        account_flows.append((category, df_totals, color, 'o'))
+
+    generate_line_graph_account_flows_per_period(period_statements, account_flows)

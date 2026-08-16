@@ -68,28 +68,42 @@ def get_balance_start_end_date_from_timestamps(start_date: Timestamp, end_date: 
     return start_balance, end_balance
 
 
-def get_account_flows_df_masks(statement, expenses_excluded=None):
+def get_account_flow_type_mask(statement, account_flow_type, expenses_excluded=None):
     if expenses_excluded is None:
         expenses_excluded = set()
 
-    income_mask = (((statement['CAD$'] > 0) & (statement['Sub Category'] != "ONLINE BANKING TRANSFER")) &
-                   ((statement['CAD$'] > 0) & (statement['Category'] != "INVESTMENTS")))
+    if account_flow_type == AccountFlow.INCOME:
+        return (((statement['CAD$'] > 0) & (statement['Sub Category'] != "ONLINE BANKING TRANSFER")) &
+                ((statement['CAD$'] > 0) & (statement['Category'] != "INVESTMENTS")))
+    elif account_flow_type == AccountFlow.TRANSFERS_FROM_SAVINGS:
+        return ((statement['CAD$'] > 0) &
+                (statement['Sub Category'] == "ONLINE BANKING TRANSFER"))
+    elif account_flow_type == AccountFlow.EXPENSES:
+        return ((statement['CAD$'] < 0) &
+                (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
+                (statement['Category'] != "INVESTMENTS"))
+    elif account_flow_type == AccountFlow.ESSENTIAL_EXPENSES:
+        return ((statement['CAD$'] < 0) &
+                (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
+                (statement['Category'] != "INVESTMENTS") &
+                (~statement['Category'].isin(expenses_excluded)))
+    elif account_flow_type == AccountFlow.SAVINGS_AND_INVESTMENTS:
+        return (((statement['CAD$'] < 0) &
+                 (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
+                ((statement['CAD$'] < 0) & (statement['Category'] == "INVESTMENTS")))
+    else:
+        return None
 
-    transfers_from_savings_mask = ((statement['CAD$'] > 0) &
-                                   (statement['Sub Category'] == "ONLINE BANKING TRANSFER"))
 
-    expenses_mask = ((statement['CAD$'] < 0) &
-                     (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
-                     (statement['Category'] != "INVESTMENTS"))
+def get_all_account_flows_df_masks(statement, expenses_excluded=None):
+    if expenses_excluded is None:
+        expenses_excluded = set()
 
-    essential_expenses_mask = ((statement['CAD$'] < 0) &
-                               (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
-                               (statement['Category'] != "INVESTMENTS") &
-                               (~statement['Category'].isin(expenses_excluded)))
-
-    savings_investments_mask = (((statement['CAD$'] < 0) &
-                                 (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
-                                ((statement['CAD$'] < 0) & (statement['Category'] == "INVESTMENTS")))
+    income_mask = get_account_flow_type_mask(statement, AccountFlow.INCOME)
+    transfers_from_savings_mask = get_account_flow_type_mask(statement, AccountFlow.TRANSFERS_FROM_SAVINGS)
+    expenses_mask = get_account_flow_type_mask(statement, AccountFlow.EXPENSES)
+    essential_expenses_mask =get_account_flow_type_mask(statement, AccountFlow.ESSENTIAL_EXPENSES, expenses_excluded)
+    savings_investments_mask = get_account_flow_type_mask(statement, AccountFlow.SAVINGS_AND_INVESTMENTS)
 
     return [income_mask, transfers_from_savings_mask, expenses_mask, essential_expenses_mask, savings_investments_mask]
 
@@ -109,7 +123,7 @@ def get_account_flows(period_statements, expenses_excluded=None):
     essential_expenses = []
 
     for statement in period_statements:
-        statement_masks = get_account_flows_df_masks(statement, expenses_excluded)
+        statement_masks = get_all_account_flows_df_masks(statement, expenses_excluded)
 
         # Income = positive CAD$ except "ONLINE BANKING TRANSFER" which are money transferred from Savings,
         #           and "INVESTMENTS" (Ex: withdrawal from RRSP overcontribution)

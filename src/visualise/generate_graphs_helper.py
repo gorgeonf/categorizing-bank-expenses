@@ -4,7 +4,8 @@ from categorise.group_in_categories import rename_description, ALL_CATEGORIES
 from data.clean_description import clean_all_descriptions
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
 from data.read_data import read_bank_statements
-from visualise.data_shaping import build_transaction_types_dicts, get_account_flows, AccountFlow
+from visualise.data_shaping import build_transaction_types_dicts, get_account_flows, AccountFlow, \
+    get_account_flow_type_mask
 from visualise.generate_graphs import (generate_transaction_types_bar_graph_per_period,
                                        generate_balance_bar_graph_per_period,
                                        generate_balance_graph,
@@ -149,9 +150,13 @@ def generate_line_graph_account_flows_per_period_helper(start_date, end_date, ba
 
 def generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
                                                                    account_flow_type:AccountFlow, expenses_excluded):
-    period_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
-    account_flows = get_account_flows(period_statements, expenses_excluded)
-    generate_line_graph_account_flows_categories_per_period(period_statements, account_flows, account_flow_type)
+    categorised_statements = get_categorise_statements(start_date, end_date, bank_statement_path)
+    # Filter by account_flow_type before slicing by period
+    statement_mask = get_account_flow_type_mask(categorised_statements, account_flow_type, expenses_excluded)
+    statement = categorised_statements.loc[statement_mask]
+
+    period_statements = slice_by_period(statement, Period.MONTHS)
+    generate_line_graph_account_flows_categories_per_period(period_statements)
 
 
 if __name__ == "__main__":
@@ -163,10 +168,12 @@ if __name__ == "__main__":
     end_date = "30/09/2026"
 
     expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
-    generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_path, expenses_excluded)
+    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
+                                                                   AccountFlow.EXPENSES, expenses_excluded)
 
-    # generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
-    #                                                                AccountFlow.INCOME, expenses_excluded)
+
+    # generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_path, expenses_excluded)
+
 
     # generate_balance_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
     # generate_transaction_types_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
