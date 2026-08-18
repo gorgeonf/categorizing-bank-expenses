@@ -45,6 +45,13 @@ def read_balance_document(file_path: Path) -> DataFrame:
     return balance
 
 
+def read_all_bank_statements(folder_path: Path) -> DataFrame:
+    csv_files = list(folder_path.glob("*.csv"))
+    all_statements = [read_bank_statements(f) for f in csv_files]
+    combined = pd.concat(all_statements, ignore_index=True)
+    combined = combined.drop_duplicates()
+    return combined.sort_values('Transaction Date')
+
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
     bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"

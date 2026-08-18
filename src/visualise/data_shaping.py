@@ -3,7 +3,7 @@ from enum import Enum
 import pandas as pd
 from pandas import DataFrame, Timestamp
 
-from categorise.group_in_categories import ALL_CATEGORIES
+from data.categories import ALL_CATEGORIES
 from data.date_utils import parse_date
 
 

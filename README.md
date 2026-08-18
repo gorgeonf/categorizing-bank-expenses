@@ -20,17 +20,18 @@ A personal data pipeline that parses RBC bank statement CSVs, categorises transa
 ```
 src/
   data/
-    read_data.py        # Load and prepare the raw CSV
-    clean_description.py# Strip known prefixes from transaction descriptions
-    date_utils.py        # Date parsing, range filtering, period slicing
-  categorise/
-    group_in_categories.py  # Keyword-based category matching
+    read_data.py             # Load and prepare the raw CSV
+    clean_description.py     # Strip known prefixes from transaction descriptions
+    date_utils.py            # Date parsing, range filtering, period slicing
+  categorise/ 
+    group_in_categories.py   # Keyword-based category matching
+    categories.py            # Definition of all the categories that can be found in the bank statements -- not committed (.gitignore)         
   visualise/
-    data_shaping.py      # Group and sum transactions into chart-ready data
-    generate_graphs.py   # Chart generation (matplotlib)
+    data_shaping.py          # Group and sum transactions into chart-ready data
+    generate_graphs.py       # Chart generation (matplotlib)
     generate_graph_helper.py # Convenience wrappers tying the pipeline together
-  pipeline.py             # End-to-end pipeline entry point
-data/                     # Bank statement CSVs (gitignored — not included in repo)
+  pipeline.py                # End-to-end pipeline entry point
+data/                        # Bank statement CSVs (gitignored — not included in repo)
 ```
 
 ## How it works

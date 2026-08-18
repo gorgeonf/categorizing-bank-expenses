@@ -313,10 +313,14 @@ def generate_grouped_bar_graph_per_period(sliced_statements: list, group: list, 
     plt.ylabel("CAD$", fontsize=12)
 
     plt.margins(y=0.2)
-    plt.legend(loc="upper right")
+    legend_fig = plt.figure(figsize=(4, len(labels) * 0.3))
+
+    handles, labels = ax.get_legend_handles_labels()
+    legend_fig.legend(handles, labels, loc='center')
+
     start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    plt.title(f"{column} Comparison by Period\n"
+    ax.set_title(f"{column} Comparison by Period\n"
               f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()
@@ -370,11 +374,22 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
     plt.ylabel("CAD$", fontsize=12)
 
     plt.margins(y=0.2)
-    plt.legend(loc="lower right")
+    # plt.legend(loc="lower right")
+
+    # Display the legend in a second, standalone window
+    legend_fig = plt.figure(figsize=(4, len(labels) * 0.3))
+    handles, labels = ax.get_legend_handles_labels()
+    legend_fig.legend(handles, labels, loc='center')
+
     start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    plt.title(f"Sub Category Trend by Period\n"
-              f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
+    ax.set_title(
+        f"Sub Category Trend by Period\n"
+        f"From {start_period} to {end_period}",
+        fontsize=16,
+        weight='bold',
+        pad=25
+    )
     plt.tight_layout()
     plt.show()
 
