@@ -498,11 +498,16 @@ def generate_line_graph_account_flows_categories_per_period(period_statements):
 
     account_flows = []
     import random
+    import colorsys
     for category in set_categories:
         df_totals = []
         for df in period_statements:
             df_totals.append(df.loc[df['Category'] == category, 'CAD$'].sum())
-        color = (random.random(), random.random(), random.random())
+        color = colorsys.hsv_to_rgb(
+            random.random(),  # hue
+            0.7,  # saturation
+            0.7  # brightness
+        )
         account_flows.append((category, df_totals, color, 'o'))
 
     generate_line_graph_account_flows_per_period(period_statements, account_flows)

@@ -161,18 +161,18 @@ def generate_line_graph_account_flows_categories_per_period_helper(start_date, e
 
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
-    bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
+    bank_statement_path = script_dir / "data/bank_statements" / "RBC_download-transactions.csv"
     balance_path = script_dir / "data" / "RBC_Balance.csv"
 
-    start_date = "01/01/2026"
+    start_date = "01/07/2026"
     end_date = "30/09/2026"
 
     expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA", }
-    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
-                                                                   AccountFlow.EXPENSES, expenses_excluded)
+    # generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_path,
+    #                                                                AccountFlow.EXPENSES, expenses_excluded)
 
 
-    # generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_path, expenses_excluded)
+    generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_path, expenses_excluded)
 
 
     # generate_balance_bar_graph_per_period_helper(start_date, end_date, bank_statement_path)
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     # generate_balance_pie_graph_helper(start_date, end_date, bank_statement_path)
     # generate_balance_bar_graph_helper(start_date, end_date, bank_statement_path)
 
-    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_path, ["OXIO", "ALCOHOL", "SAFEWAY", "COSTCO", "LONDON DRUGS","HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA",])
+    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_path, ["AURELIE YOGACOACHING","PAYROLL DEPOSIT SERVICE DE GARDE", "CHEQUE DEPOSIT"])
 
     # sliced_statements = get_monthly_statements(start_date, end_date, bank_statement_path)
     # income = generate_income_sub_categories(sliced_statements)
