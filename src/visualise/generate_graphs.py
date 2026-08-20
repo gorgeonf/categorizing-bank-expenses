@@ -76,6 +76,74 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
     plt.show()
 
 
+def generate_category_line_graph_per_period(sliced_statements: list, category: list):
+    """
+    Line chart of one or several sub-categories across periods.
+
+    :param sliced_statements: list of DataFrames, one per period (e.g. from slice_by_period).
+    :param category: list of ategory names to plot.
+    """
+    labels = np.array(category)
+    y = []
+    xticks = []
+    for data in sliced_statements:
+        xticks.append(data.iloc[0]['Transaction Date'].strftime('%B - %Y').upper())
+        tmp_array = []
+        for sub in category:
+            sub_mask = data['Category'] == sub
+            tmp_array.append(data.loc[sub_mask, 'CAD$'].sum())
+        y.append(np.array(tmp_array))
+
+    y_matrix = np.array(y)
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    x = np.arange(len(y))
+
+    cmap = plt.get_cmap('tab10')
+    colors_categories = [cmap(i) for i in range(len(labels))]
+
+    for i in range(len(category)):
+        total = y_matrix[:, i].sum()
+        label = f"{labels[i]}: {total:,.2f}$".replace(",", " ")
+        ax.plot(x, y_matrix[:, i], marker='o', color=colors_categories[i], label=label)
+
+        for xi, yi in zip(x, y_matrix[:, i]):
+            if yi != 0:
+                ax.annotate(f"{yi:,.2f}$".replace(",", " "),
+                            (xi, yi), textcoords="offset points", xytext=(0, 8),
+                            ha='center', fontsize=8, weight='bold')
+
+    ax.grid(axis='y', linestyle=':', linewidth=1, color='gray', alpha=0.4)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(xticks)
+    ax.tick_params(axis='x', which='both', length=0, pad=10)
+
+    plt.xlabel("Time Period", fontsize=12, labelpad=10)
+    plt.ylabel("CAD$", fontsize=12)
+
+    plt.margins(y=0.2)
+    # plt.legend(loc="lower right")
+
+    # Display the legend in a second, standalone window
+    legend_fig = plt.figure(figsize=(4, len(labels) * 0.3))
+    handles, labels = ax.get_legend_handles_labels()
+    legend_fig.legend(handles, labels, loc='center')
+
+    start_period = sliced_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
+    end_period = sliced_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
+    ax.set_title(
+        f"Category Trend by Period\n"
+        f"From {start_period} to {end_period}",
+        fontsize=16,
+        weight='bold',
+        pad=25
+    )
+    plt.tight_layout()
+    plt.show()
+
+
 def generate_line_graph_account_flows_per_period(period_statements, account_flows):
     """
     Interactive line chart comparing Income, Transfers from Savings, Expenses,
@@ -184,8 +252,11 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
     # Add a space before NET CHANGE and a description
     if net_change:
         import matplotlib.patches as mpatches
-        spacer_handle = mpatches.Rectangle((0, 0), 1, 1, fill=False, edgecolor='none', linewidth=0)
+        spacer_handle = mpatches.Rectangle((0, 0), 1, 1, fill=False, edgecolor='none', linewidth=0, label='')
+        formula_handle = mpatches.Rectangle((0, 0), 1, 1, fill=False, edgecolor='none', linewidth=0,
+                                            label="NET CHANGE = Income + Expenses")
         sorted_handles.append(spacer_handle)
+        sorted_handles.append(formula_handle)
         sorted_handles.append(net_change[1])
 
     # Display the legend in a second, standalone window

@@ -153,7 +153,7 @@ def get_account_flows(period_statements, expenses_excluded=None):
         savings_investments.append(savings_investments_sum)
 
         # Net change: sum of all the above except savings and investments
-        net_change.append(transfers_from_savings_sum + income_sum + expenses_sum)
+        net_change.append(income_sum + expenses_sum)
 
     return [
         ("INCOME", income, 'blue', 's'),

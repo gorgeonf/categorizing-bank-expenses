@@ -12,7 +12,8 @@ from visualise.data_shaping import (build_transaction_types_dicts, get_account_f
                                     get_account_flow_type_mask)
 from visualise.generate_graphs import (generate_line_graph_account_flows_per_period,
                                        generate_line_graph_account_flows_categories_per_period,
-                                       generate_sub_category_line_graph_per_period)
+                                       generate_sub_category_line_graph_per_period,
+                                       generate_category_line_graph_per_period)
 
 
 def get_categorise_statements(start_date: str, end_date: str, bank_statement_df: DataFrame):
@@ -67,6 +68,15 @@ def generate_sub_category_line_graph_per_period_helper(start_date: str, end_date
     generate_sub_category_line_graph_per_period(period_statements, sub_category)
 
 
+def generate_category_line_graph_per_period_helper(start_date: str, end_date: str, bank_statement_df: DataFrame,
+                                                   category: list):
+    """
+
+    """
+    period_statements = get_monthly_statements(start_date, end_date, bank_statement_df)
+    generate_category_line_graph_per_period(period_statements, category)
+
+
 def generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df, expenses_excluded):
     period_statements = get_monthly_statements(start_date, end_date, bank_statement_df)
     account_flows = get_account_flows(period_statements, expenses_excluded)
@@ -93,10 +103,13 @@ if __name__ == "__main__":
     start_date = "01/05/2026"
     end_date = "31/10/2026"
 
-    expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", }
+    expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA"}
     generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
                                                                    AccountFlow.EXPENSES, expenses_excluded)
     generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df, expenses_excluded)
-    generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
-                                                       ["AURELIE YOGACOACHING", "PAYROLL DEPOSIT SERVICE DE GARDE",
-                                                        "CHEQUE DEPOSIT"])
+    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
+    #                                                    ["AURELIE YOGACOACHING", "PAYROLL DEPOSIT SERVICE DE GARDE",
+    #                                                     "CHEQUE DEPOSIT"])
+
+    # generate_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
+    #                                                ["COFFEES", "RESTAURANTS", "COSTCO", "IMMIGRATION_AUSTRALIA"])
