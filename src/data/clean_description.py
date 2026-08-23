@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pandas import DataFrame
 
-from data.read_data import read_bank_statements
+from data.read_data import read_all_bank_statements
 
 COMMON_PREFIXES = [r".*E-TRANSFER SENT ",
                    r".*INTERAC PURCHASE - \d{4}",
@@ -31,8 +31,8 @@ def clean_all_descriptions(data_statements: DataFrame) -> DataFrame:
 
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
-    bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    raw_statements = read_bank_statements(bank_statement_path)
+    bank_statement_path = script_dir / "data/bank_statements"
+    bank_statement_df = read_all_bank_statements(bank_statement_path)
 
-    cleaned_statement = clean_all_descriptions(raw_statements)
+    cleaned_statement = clean_all_descriptions(bank_statement_df)
     cleaned_statement.to_csv(script_dir / "data/clean_statement.csv")

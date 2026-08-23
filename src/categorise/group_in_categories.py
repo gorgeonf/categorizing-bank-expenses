@@ -2,12 +2,11 @@ import re
 from pathlib import Path
 
 import pandas as pd
-from data.categories import ALL_CATEGORIES, COLLAPSE_SUB_CATEGORY, KEYWORD_SUB_CATEGORY_OVERRIDE, ONLINE_TRANSFER
-
 from pandas import DataFrame
 
+from data.categories import ALL_CATEGORIES, COLLAPSE_SUB_CATEGORY, KEYWORD_SUB_CATEGORY_OVERRIDE, ONLINE_TRANSFER
 from data.clean_description import clean_all_descriptions
-from data.read_data import read_bank_statements
+from data.read_data import read_all_bank_statements
 
 
 def determine_category(text: str) -> tuple:
@@ -48,10 +47,12 @@ def rename_description(data_statements: DataFrame) -> DataFrame:
 
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
-    bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    raw_statements = read_bank_statements(bank_statement_path)
+    bank_statement_path = script_dir / "data/bank_statements"
+    bank_statement_df = read_all_bank_statements(bank_statement_path)
 
-    cleaned_statements = clean_all_descriptions(raw_statements)
+    cleaned_statement = clean_all_descriptions(bank_statement_df)
+
+    cleaned_statements = clean_all_descriptions(bank_statement_df)
     categorised_statements = rename_description(cleaned_statements)
     categorised_statements_path = script_dir / "data" / "categorised_statements.csv"
     categorised_statements.to_csv(categorised_statements_path)

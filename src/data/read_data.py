@@ -54,8 +54,8 @@ def read_all_bank_statements(folder_path: Path) -> DataFrame:
 
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve().parent.parent.parent
-    bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    statements = read_bank_statements(bank_statement_path)
+    bank_statement_path = script_dir / "data/bank_statements"
+    bank_statement_df = read_all_bank_statements(bank_statement_path)
 
     balance_path = script_dir / "data" / "RBC_Balance.csv"
     balance_df = read_balance_document(balance_path)

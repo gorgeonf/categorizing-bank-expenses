@@ -104,8 +104,7 @@ if __name__ == "__main__":
     end_date = "31/10/2026"
 
     expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA"}
-    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
-                                                                   AccountFlow.EXPENSES, expenses_excluded)
+    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df, AccountFlow.EXPENSES, expenses_excluded)
     generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df, expenses_excluded)
     # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
     #                                                    ["AURELIE YOGACOACHING", "PAYROLL DEPOSIT SERVICE DE GARDE",
