@@ -85,13 +85,13 @@ def generate_line_graph_account_flows_per_period_helper(start_date, end_date, ba
 
 def generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df: DataFrame,
                                                                    account_flow_type: AccountFlow, expenses_excluded):
-    categorised_statements = get_categorise_statements(start_date, end_date, bank_statement_df)
-    # Filter by account_flow_type before slicing by period
-    statement_mask = get_account_flow_type_mask(categorised_statements, account_flow_type, expenses_excluded)
-    statement = categorised_statements.loc[statement_mask]
+    period_statements = get_monthly_statements(start_date, end_date, bank_statement_df)
+    filtered_period_statements = []
+    for statement in period_statements:
+        statement_mask = get_account_flow_type_mask(statement, account_flow_type, expenses_excluded)
+        filtered_period_statements.append(statement.loc[statement_mask])
 
-    period_statements = slice_by_period(statement, Period.MONTHS)
-    generate_line_graph_account_flows_categories_per_period(period_statements)
+    generate_line_graph_account_flows_categories_per_period(filtered_period_statements)
 
 
 if __name__ == "__main__":
@@ -100,11 +100,12 @@ if __name__ == "__main__":
 
     bank_statement_df = read_all_bank_statements(bank_statement_path)
 
-    start_date = "01/05/2026"
+    start_date = "01/04/2026"
     end_date = "31/10/2026"
 
     expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA"}
-    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df, AccountFlow.EXPENSES, expenses_excluded)
+    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
+                                                                   AccountFlow.INCOME, expenses_excluded)
     generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df, expenses_excluded)
     # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
     #                                                    ["AURELIE YOGACOACHING", "PAYROLL DEPOSIT SERVICE DE GARDE",
