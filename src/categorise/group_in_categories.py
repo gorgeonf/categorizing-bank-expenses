@@ -1,12 +1,10 @@
-import re
-from pathlib import Path
-
 import pandas as pd
-from pandas import DataFrame
-
+import re
 from data.categories import ALL_CATEGORIES, COLLAPSE_SUB_CATEGORY, KEYWORD_SUB_CATEGORY_OVERRIDE, ONLINE_TRANSFER
 from data.clean_description import clean_all_descriptions
 from data.read_data import read_all_bank_statements
+from pandas import DataFrame
+from pathlib import Path
 
 
 def determine_category(text: str) -> tuple:

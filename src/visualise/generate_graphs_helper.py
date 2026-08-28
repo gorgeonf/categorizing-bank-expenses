@@ -3,7 +3,7 @@ from pathlib import Path
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from categorise.group_in_categories import rename_description
-from data.categories import ALL_CATEGORIES
+from data.categories import ALL_CATEGORIES, EXPENSES_EXCLUDED
 from data.clean_description import clean_all_descriptions
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
 from data.read_data import read_all_bank_statements
@@ -91,7 +91,7 @@ def generate_line_graph_account_flows_categories_per_period_helper(start_date, e
         statement_mask = get_account_flow_type_mask(statement, account_flow_type, expenses_excluded)
         filtered_period_statements.append(statement.loc[statement_mask])
 
-    generate_line_graph_account_flows_categories_per_period(filtered_period_statements)
+    generate_line_graph_account_flows_categories_per_period(filtered_period_statements, account_flow_type)
 
 
 if __name__ == "__main__":
@@ -101,15 +101,9 @@ if __name__ == "__main__":
     bank_statement_df = read_all_bank_statements(bank_statement_path)
 
     start_date = "01/04/2026"
-    end_date = "31/10/2026"
+    end_date = "31/12/2026"
 
-    expenses_excluded = {"HOUSE_CLOTHING", "TRAVELS", "VANCOUVER_COMMUNITY_CENTER", "IMMIGRATION_AUSTRALIA"}
+
     generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
-                                                                   AccountFlow.INCOME, expenses_excluded)
-    generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df, expenses_excluded)
-    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
-    #                                                    ["AURELIE YOGACOACHING", "PAYROLL DEPOSIT SERVICE DE GARDE",
-    #                                                     "CHEQUE DEPOSIT"])
-
-    # generate_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
-    #                                                ["COFFEES", "RESTAURANTS", "COSTCO", "IMMIGRATION_AUSTRALIA"])
+                                                                   AccountFlow.INCOME, EXPENSES_EXCLUDED)
+    generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df, EXPENSES_EXCLUDED)

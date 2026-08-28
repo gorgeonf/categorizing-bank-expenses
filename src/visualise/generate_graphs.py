@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from matplotlib.widgets import CheckButtons
+from matplotlib.lines import Line2D
+from matplotlib.widgets import CheckButtons, Button
 
 from visualise.data_shaping import AccountFlow
 
@@ -144,7 +145,7 @@ def generate_category_line_graph_per_period(sliced_statements: list, category: l
     plt.show()
 
 
-def generate_line_graph_account_flows_per_period(period_statements, account_flows):
+def generate_line_graph_account_flows_per_period(period_statements, account_flows, account_flow_type=None):
     """
     Interactive line chart comparing Income, Transfers from Savings, Expenses,
     Savings/Investments, and Net Change across periods, with toggleable lines
@@ -216,6 +217,16 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
 
     check.on_clicked(toggle_line)
 
+    # Shrink rax slightly to make room for the button, or add a new small axes below it
+    pos = rax.get_position()
+    button_ax = fig.add_axes([pos.x0, pos.y0 - 0.08, pos.width, 0.05])
+    toggle_all_button = Button(button_ax, 'Select/Deselect All')
+    def toggle_all(event):
+        for label in lines.keys():
+            check.set_active(list(lines.keys()).index(label))
+
+    toggle_all_button.on_clicked(toggle_all)
+
     # Delimit time period with separation lines
     for i in range(len(x_coord) - 1):
         midpoint = (x_coord[i] + x_coord[i + 1]) / 2
@@ -242,13 +253,30 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
 
     # To sort the legend by the highest CAD$ and put NET CHANGE at the end
     net_change = ()
-    for type in flow_totals:
-        if AccountFlow.NET_CHANGE.value in type:
-            flow_totals.remove(type)
-            net_change = type
+    for flow_type in flow_totals:
+        if AccountFlow.NET_CHANGE.value in flow_type:
+            flow_totals.remove(flow_type)
+            net_change = flow_type
             break
     flow_totals_sorted = sorted(flow_totals, key=lambda x: x[2], reverse=False)
-    sorted_handles = [item[1] for item in flow_totals_sorted]
+
+    sorted_handles = []
+    for name, line, value in flow_totals_sorted:
+        total = abs(value)
+        average = total / len(period_statements)
+        handle = Line2D(
+            [], [],
+            color=line.get_color(),
+            marker=line.get_marker(),
+            markersize=line.get_markersize(),
+            linestyle=line.get_linestyle(),
+            linewidth=line.get_linewidth(),
+            label=f"{name}\n{total:,.2f}\\$ ({average:,.0f}\\$/mth)".replace(",", " ")
+        )
+        sorted_handles.append(handle)
+
+    # sorted_handles = [item [1] for item in flow_totals_sorted]
+
     # Add a space before NET CHANGE and a description
     if net_change:
         import matplotlib.patches as mpatches
@@ -256,7 +284,7 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
         formula_handle = mpatches.Rectangle((0, 0), 1, 1, fill=False, edgecolor='none', linewidth=0,
                                             label="NET CHANGE = Income + Expenses")
         sorted_handles.append(spacer_handle)
-        sorted_handles.append(formula_handle)
+        # sorted_handles.append(formula_handle)
         sorted_handles.append(net_change[1])
 
     # Display the legend in a second, standalone window
@@ -265,13 +293,14 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
 
     start_period = period_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = period_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
-    ax.set_title(f"Checking account transactions\n"
-                 f"From {start_period} to {end_period}", fontsize=16, weight='bold', pad=25)
+    flow_type = account_flow_type.value if account_flow_type else ""
+    ax.set_title(f"CHECKING ACCOUNT {flow_type}\n"
+                 f"FROM {start_period} TO {end_period}", fontsize=16, weight='bold', pad=25)
     plt.tight_layout()
     plt.show()
 
 
-def generate_line_graph_account_flows_categories_per_period(period_statements):
+def generate_line_graph_account_flows_categories_per_period(period_statements, account_flow_type=None):
     set_categories = set()
     for df in period_statements:
         tmp_set = set(list(df['Category']))
@@ -291,4 +320,4 @@ def generate_line_graph_account_flows_categories_per_period(period_statements):
         )
         account_flows.append((category, df_totals, color, 'o'))
 
-    generate_line_graph_account_flows_per_period(period_statements, account_flows)
+    generate_line_graph_account_flows_per_period(period_statements, account_flows, account_flow_type)
