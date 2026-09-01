@@ -3,7 +3,7 @@ from enum import Enum
 import pandas as pd
 from pandas import DataFrame, Timestamp
 
-from data.categories import ALL_CATEGORIES
+from data.categories import ALL_CATEGORIES, EXPENSES_NOT_REDUCIBLE
 from data.date_utils import parse_date
 
 
@@ -68,10 +68,7 @@ def get_balance_start_end_date_from_timestamps(start_date: Timestamp, end_date: 
     return start_balance, end_balance
 
 
-def get_account_flow_type_mask(statement, account_flow_type, expenses_excluded=None):
-    if expenses_excluded is None:
-        expenses_excluded = set()
-
+def get_account_flow_type_mask(statement, account_flow_type):
     if account_flow_type == AccountFlow.INCOME:
         return ((statement['CAD$'] > 0) &
                 (statement['Category'] != "INVESTMENTS") &
@@ -89,12 +86,8 @@ def get_account_flow_type_mask(statement, account_flow_type, expenses_excluded=N
         is_refund_or_correction = ((statement['Description 1'].str.contains("REFUND") |
                                    statement['Description 1'].str.contains("CORRECTION")) & (statement['Category'] != "TAX REFUND CANADA"))
         return is_expense | (is_refund_or_correction & (statement['CAD$'] > 0))
-
     elif account_flow_type == AccountFlow.ESSENTIAL_EXPENSES:
-        return ((statement['CAD$'] < 0) &
-                (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
-                (statement['Category'] != "INVESTMENTS") &
-                (~statement['Category'].isin(expenses_excluded)))
+        return (statement['CAD$'] < 0) & (statement['Category'].isin(EXPENSES_NOT_REDUCIBLE))
     elif account_flow_type == AccountFlow.SAVINGS_AND_INVESTMENTS:
         return (((statement['CAD$'] < 0) &
                  (statement['Sub Category'] == "ONLINE TRANSFER TO DEPOSIT ACCOUNT")) |
@@ -103,26 +96,21 @@ def get_account_flow_type_mask(statement, account_flow_type, expenses_excluded=N
         return None
 
 
-def get_all_account_flows_df_masks(statement, expenses_excluded=None):
-    if expenses_excluded is None:
-        expenses_excluded = set()
-
+def get_all_account_flows_df_masks(statement):
     income_mask = get_account_flow_type_mask(statement, AccountFlow.INCOME)
     transfers_from_savings_mask = get_account_flow_type_mask(statement, AccountFlow.TRANSFERS_FROM_SAVINGS)
     expenses_mask = get_account_flow_type_mask(statement, AccountFlow.EXPENSES)
-    essential_expenses_mask =get_account_flow_type_mask(statement, AccountFlow.ESSENTIAL_EXPENSES, expenses_excluded)
+    essential_expenses_mask =get_account_flow_type_mask(statement, AccountFlow.ESSENTIAL_EXPENSES)
     savings_investments_mask = get_account_flow_type_mask(statement, AccountFlow.SAVINGS_AND_INVESTMENTS)
 
     return [income_mask, transfers_from_savings_mask, expenses_mask, essential_expenses_mask, savings_investments_mask]
 
 
-def get_account_flows(period_statements, expenses_excluded=None):
+def get_account_flows(period_statements):
     """
     Returns a list of label, DataFrame, color and marker for the account flows:
         income, transfers_from_savings, expenses, essential_expenses, savings_investments, net_change
     """
-    if expenses_excluded is None:
-        expenses_excluded = set()
     transfers_from_savings = []
     savings_investments = []
     income = []
@@ -131,7 +119,7 @@ def get_account_flows(period_statements, expenses_excluded=None):
     essential_expenses = []
 
     for statement in period_statements:
-        statement_masks = get_all_account_flows_df_masks(statement, expenses_excluded)
+        statement_masks = get_all_account_flows_df_masks(statement)
 
         # Income = positive CAD$ except "ONLINE BANKING TRANSFER" which are money transferred from Savings,
         #           and "INVESTMENTS" (Ex: withdrawal from RRSP overcontribution)

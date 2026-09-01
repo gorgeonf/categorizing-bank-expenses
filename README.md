@@ -69,7 +69,8 @@ This project is under active development. Planned next steps include:
 
 ## Disclaimer
 
-This project processes personal financial data for demonstration purposes. Sample data and category mappings are excluded from version control.
+This project processes personal financial data for demonstration purposes. 
+Sample data and category mappings are excluded from version control.
 
 ## Acknowledgements
 
