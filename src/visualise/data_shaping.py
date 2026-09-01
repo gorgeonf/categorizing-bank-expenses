@@ -73,15 +73,23 @@ def get_account_flow_type_mask(statement, account_flow_type, expenses_excluded=N
         expenses_excluded = set()
 
     if account_flow_type == AccountFlow.INCOME:
-        return (((statement['CAD$'] > 0) & (statement['Sub Category'] != "ONLINE BANKING TRANSFER")) &
-                ((statement['CAD$'] > 0) & (statement['Category'] != "INVESTMENTS")))
+        return ((statement['CAD$'] > 0) &
+                (statement['Category'] != "INVESTMENTS") &
+                (statement['Sub Category'] != "ONLINE BANKING TRANSFER") &
+                ((statement['Category'] == "TAX REFUND CANADA") |
+                 (~statement['Description 1'].str.contains("REFUND") &
+                  ~statement['Description 1'].str.contains("CORRECTION"))))
     elif account_flow_type == AccountFlow.TRANSFERS_FROM_SAVINGS:
         return ((statement['CAD$'] > 0) &
                 (statement['Sub Category'] == "ONLINE BANKING TRANSFER"))
     elif account_flow_type == AccountFlow.EXPENSES:
-        return ((statement['CAD$'] < 0) &
-                (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
-                (statement['Category'] != "INVESTMENTS"))
+        is_expense = ((statement['CAD$'] < 0) &
+                      (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &
+                      (statement['Category'] != "INVESTMENTS"))
+        is_refund_or_correction = ((statement['Description 1'].str.contains("REFUND") |
+                                   statement['Description 1'].str.contains("CORRECTION")) & (statement['Category'] != "TAX REFUND CANADA"))
+        return is_expense | (is_refund_or_correction & (statement['CAD$'] > 0))
+
     elif account_flow_type == AccountFlow.ESSENTIAL_EXPENSES:
         return ((statement['CAD$'] < 0) &
                 (statement['Sub Category'] != "ONLINE TRANSFER TO DEPOSIT ACCOUNT") &

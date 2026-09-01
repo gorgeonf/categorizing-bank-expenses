@@ -33,7 +33,7 @@ def generate_sub_category_line_graph_per_period(sliced_statements: list, sub_cat
 
     x = np.arange(len(y))
 
-    cmap = plt.get_cmap('tab10')
+    cmap = plt.get_cmap('tab20')
     colors_categories = [cmap(i) for i in range(len(labels))]
 
     for i in range(len(sub_category)):
@@ -82,7 +82,7 @@ def generate_category_line_graph_per_period(sliced_statements: list, category: l
     Line chart of one or several sub-categories across periods.
 
     :param sliced_statements: list of DataFrames, one per period (e.g. from slice_by_period).
-    :param category: list of ategory names to plot.
+    :param category: list of category names to plot.
     """
     labels = np.array(category)
     y = []
@@ -165,8 +165,6 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
 
     ax = fig.add_subplot(gs[:, 0])  # graph takes the full left column
     rax = fig.add_subplot(gs[0, 1])  # checkboxes: top-right
-    box_ax = fig.add_subplot(gs[1, 1])  # info box: bottom-right
-    box_ax.axis('off')  # no ticks/frame, just a text area
 
     # Maps each flow's name (e.g. "INCOME") to its Line2D object,
     # so toggle_line can look up and show/hide the correct line when its checkbox is clicked.
@@ -207,6 +205,24 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
         frame_props={'edgecolor': 'gray', 's': 100},  # checkbox frame (size 's', edge color)
         check_props={'facecolor': colors},  # checkmark color per item
     )
+
+    # Store averages alongside colors, keyed by name, for reuse in the info box
+    averages = {}
+    for flow in account_flows:
+        flow_array = np.array(flow[1])
+        averages[flow[0]] = (flow_array.sum() / len(period_statements), flow[2])
+
+    def update_info_box():
+        avg_fig.clear()
+        avg_handles = []
+        for name, line in lines.items():
+            if line.get_visible():
+                avg, color = averages[name]
+                handle = Line2D([], [], color=color, linewidth=0, marker='s', markersize=8,
+                                label=f"{name}: {abs(avg):,.0f}$/mth".replace(",", " "))
+                avg_handles.append(handle)
+        avg_fig.legend(handles=avg_handles, loc='center')
+        avg_fig.canvas.draw_idle()
 
     def toggle_line(label):
         line = lines[label]
@@ -275,8 +291,6 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
         )
         sorted_handles.append(handle)
 
-    # sorted_handles = [item [1] for item in flow_totals_sorted]
-
     # Add a space before NET CHANGE and a description
     if net_change:
         import matplotlib.patches as mpatches
@@ -290,6 +304,10 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
     # Display the legend in a second, standalone window
     legend_fig = plt.figure(figsize=(4, len(account_flows) * 0.3))
     legend_fig.legend(handles=sorted_handles, loc='center')
+
+    # Display the averages in a standalone window
+    avg_fig = plt.figure(figsize=(4, len(account_flows) * 0.3))
+    update_info_box()  # initial draw
 
     start_period = period_statements[0].iloc[0]['Transaction Date'].strftime("%d %B %Y")
     end_period = period_statements[-1].iloc[-1]['Transaction Date'].strftime("%d %B %Y")
