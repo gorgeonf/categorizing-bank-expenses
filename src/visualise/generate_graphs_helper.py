@@ -104,8 +104,8 @@ if __name__ == "__main__":
     end_date = "31/12/2026"
 
 
-    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
-                                                                   AccountFlow.INCOME)
+    # generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
+    #                                                                AccountFlow.INCOME)
     generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df)
 
     # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df, list(GROCERIES))

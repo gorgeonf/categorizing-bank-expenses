@@ -218,8 +218,9 @@ def generate_line_graph_account_flows_per_period(period_statements, account_flow
         for name, line in lines.items():
             if line.get_visible():
                 avg, color = averages[name]
+                display_avg = avg if name == AccountFlow.NET_CHANGE.value else abs(avg)
                 handle = Line2D([], [], color=color, linewidth=0, marker='s', markersize=8,
-                                label=f"{name}: {abs(avg):,.0f}$/mth".replace(",", " "))
+                                label=f"{name}: {display_avg:,.0f}$/mth".replace(",", " "))
                 avg_handles.append(handle)
         avg_fig.legend(handles=avg_handles, loc='center')
         avg_fig.canvas.draw_idle()
