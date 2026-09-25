@@ -1,40 +1,62 @@
-from datetime import datetime
+import argparse
+
 from pathlib import Path
 
-from pandas.core.interchange.dataframe_protocol import DataFrame
-
-from categorise.group_in_categories import rename_description
-from data.clean_description import clean_all_descriptions
-from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
-from data.read_data import read_bank_statements
-from visualise.data_shaping import build_transaction_types_dicts
-
-
-def run_pipeline(data_statements: DataFrame, start_date: datetime = None, end_date: datetime = None):
-    if not start_date or not end_date:
-        start_date, end_date = get_full_date_range(data_statements)
-    statement = filter_by_date_range(start_date, end_date, data_statements)
-
-    cleaned_statements = clean_all_descriptions(statement)
-    categorised_statements = rename_description(cleaned_statements)
-    return categorised_statements
-
-
-def get_full_date_range(statement: DataFrame) -> tuple:
-    return statement['Transaction Date'].min(), statement['Transaction Date'].max()
-
+from data.categories import DEFAULT_SUB_CATEGORIES, resolve_sub_categories
+from data.read_data import read_all_bank_statements
+from visualise.data_shaping import AccountFlow
+from visualise.generate_graphs_helper import generate_line_graph_account_flows_per_period_helper, \
+    generate_sub_category_line_graph_per_period_helper, generate_line_graph_account_flows_categories_per_period_helper
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command")
+    parser.add_argument("--start", "-s", required=True)
+    parser.add_argument("--end", "-e", required=True)
+
+    parser.add_argument("--sub_categories",
+                        nargs="*",
+                        default=None,
+                        required=False)
+
+    parser.add_argument("--category",
+                        default=AccountFlow.EXPENSES,
+                        required=False)
+
+    args = parser.parse_args()
+
+    sub_categories = (
+        resolve_sub_categories(args.sub_categories)
+        if args.sub_categories
+        else DEFAULT_SUB_CATEGORIES
+    )
+
+
     script_dir = Path(__file__).resolve().parent.parent
-    bank_statement_path = script_dir / "data" / "RBC_download-transactions.csv"
-    raw_statements = read_bank_statements(bank_statement_path)
+    bank_statement_path = script_dir / "data/bank_statements"
 
-    selected_start = parse_date("11/04/2026")
-    selected_end = parse_date("24/08/2026")
+    bank_statement_df = read_all_bank_statements(bank_statement_path)
 
-    categorised_statements = run_pipeline(raw_statements, selected_start, selected_end)
-    transaction_dicts = build_transaction_types_dicts(categorised_statements)
+    if args.command == "graph":
+        generate_line_graph_account_flows_per_period_helper(
+            args.start,
+            args.end,
+            bank_statement_df
+        )
 
-    period_statements = slice_by_period(categorised_statements, Period.MONTHS)
-    for period in period_statements:
-        print(f"From {period['Transaction Date'].iloc[0]} to {period['Transaction Date'].iloc[-1]}")
+    if args.command == "category":
+        args.category = AccountFlow(args.category.upper())
+        generate_line_graph_account_flows_categories_per_period_helper(
+            args.start,
+            args.end,
+            bank_statement_df,
+            args.category
+        )
+
+    if args.command == "sub_categories":
+        generate_sub_category_line_graph_per_period_helper(
+            args.start,
+            args.end,
+            bank_statement_df,
+            sub_categories
+        )

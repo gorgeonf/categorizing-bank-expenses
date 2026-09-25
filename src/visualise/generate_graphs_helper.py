@@ -3,7 +3,7 @@ from pathlib import Path
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from categorise.group_in_categories import rename_description
-from data.categories import ALL_CATEGORIES
+from data.categories import ALL_CATEGORIES, GROCERIES, UTILITIES
 from data.clean_description import clean_all_descriptions
 from data.date_utils import parse_date, filter_by_date_range, slice_by_period, Period
 from data.read_data import read_all_bank_statements
@@ -103,9 +103,11 @@ if __name__ == "__main__":
     start_date = "01/05/2026"
     end_date = "31/12/2026"
 
+    generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
+                                                                   AccountFlow.EXPENSES)
+    # generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df)
 
-    # generate_line_graph_account_flows_categories_per_period_helper(start_date, end_date, bank_statement_df,
-    #                                                                AccountFlow.INCOME)
-    generate_line_graph_account_flows_per_period_helper(start_date, end_date, bank_statement_df)
+    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df,
+    #                                                    list(GROCERIES) + list(UTILITIES) + ["RENT", "DENMAN_ATHLETICS"])
 
-    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df, list(GROCERIES))
+    # generate_sub_category_line_graph_per_period_helper(start_date, end_date, bank_statement_df, list(INCOME))
