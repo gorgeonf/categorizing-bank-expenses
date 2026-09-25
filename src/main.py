@@ -31,7 +31,6 @@ if __name__ == "__main__":
         else DEFAULT_SUB_CATEGORIES
     )
 
-
     script_dir = Path(__file__).resolve().parent.parent
     bank_statement_path = script_dir / "data/bank_statements"
 
@@ -43,8 +42,7 @@ if __name__ == "__main__":
             args.end,
             bank_statement_df
         )
-
-    if args.command == "category":
+    elif args.command == "category":
         args.category = AccountFlow(args.category.upper())
         generate_line_graph_account_flows_categories_per_period_helper(
             args.start,
@@ -52,8 +50,7 @@ if __name__ == "__main__":
             bank_statement_df,
             args.category
         )
-
-    if args.command == "sub_categories":
+    elif args.command == "sub_categories":
         generate_sub_category_line_graph_per_period_helper(
             args.start,
             args.end,
